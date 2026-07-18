@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/mobile/melos_fmbp.iml" filepath="$PROJECT_DIR$/mobile/melos_fmbp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shared/constants/melos_fmbp_constants.iml" filepath="$PROJECT_DIR$/shared/constants/melos_fmbp_constants.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shared/models/melos_fmbp_models.iml" filepath="$PROJECT_DIR$/shared/models/melos_fmbp_models.iml" />
+      <module fileurl="file://$PROJECT_DIR$/melos_fmbp_monorepo.iml" filepath="$PROJECT_DIR$/melos_fmbp_monorepo.iml" />
+    </modules>
+  </component>
+</project>
