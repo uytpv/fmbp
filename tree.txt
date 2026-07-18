@@ -1,20 +1,49 @@
-Folder PATH listing
+﻿Folder PATH listing
 Volume serial number is 98C7-7B73
 C:.
+|   .editorconfig
+|   .gitignore
+|   CODE_OF_CONDUCT.md
+|   CONTRIBUTING.md
+|   LICENSE
+|   SECURITY.md
 |   tree.txt
-|   update_docs.ps1
-|   update_docs_2.ps1
-|   update_docs_3.ps1
 |   
 +---.github
+|   |   CODEOWNERS
+|   |   
+|   +---ISSUE_TEMPLATE
+|   |       Bug.md
+|   |       Feature.md
+|   |       Proposal.md
+|   |       Question.md
+|   |       
+|   \---PULL_REQUEST_TEMPLATE
+|           .gitkeep
+|           
 +---admin
+|       .gitkeep
+|       
 +---ai-server
+|       .gitkeep
+|       
++---config
+|   +---development
+|   |       .gitkeep
+|   |       
+|   +---production
+|   |       .gitkeep
+|   |       
+|   \---staging
+|           .gitkeep
+|           
 +---docs
 |   |   CHANGELOG.md
 |   |   Coding Standard.md
 |   |   Glossary.md
 |   |   Overall Main Concpept Specification.md
 |   |   README.md
+|   |   Release Notes.md
 |   |   
 |   +---00-vision
 |   |       DOC-000 Product Vision.md
@@ -35,13 +64,8 @@ C:.
 |   |       DOC-107 Financial Projection.md
 |   |       
 |   +---15-research
-|   |       ChatGPT.md
-|   |       Gemini.md
-|   |       Google Keep.md
-|   |       Mealime.md
-|   |       Money Lover.md
-|   |       Notion.md
-|   |       Paprika.md
+|   |       DOC-150 Research Framework.md
+|   |       Revolut.md
 |   |       Samsung Food.md
 |   |       YNAB.md
 |   |       
@@ -152,12 +176,39 @@ C:.
 |   |   |   DOC-807 Cost Optimization.md
 |   |   |   
 |   |   +---00-overview
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---10-models
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---20-prompts
+|   |   |   +---Developer Prompt
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   +---Evaluation Prompt
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   +---RAG Prompt
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   +---System Prompt
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   \---Workflow Prompt
+|   |   |           .gitkeep
+|   |   |           
 |   |   +---30-rag
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---40-workflows
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---50-cost
+|   |   |       .gitkeep
+|   |   |       
 |   |   \---60-guardrails
+|   |           .gitkeep
+|   |           
 |   +---90-release
 |   |       DOC-900 MVP.md
 |   |       DOC-901 V1.md
@@ -189,18 +240,55 @@ C:.
 |   |       
 |   +---assets
 |   |   +---api
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---branding
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---database
+|   |   |       .gitkeep
+|   |   |       
 |   |   +---diagrams
 |   |   |   +---architecture
+|   |   |   |       .gitkeep
+|   |   |   |       
 |   |   |   +---database
+|   |   |   |       .gitkeep
+|   |   |   |       
 |   |   |   +---deployment
+|   |   |   |       .gitkeep
+|   |   |   |       
 |   |   |   +---erd
+|   |   |   |       .gitkeep
+|   |   |   |       
 |   |   |   +---flow
+|   |   |   |       .gitkeep
+|   |   |   |       
 |   |   |   \---sequence
+|   |   |           .gitkeep
+|   |   |           
 |   |   +---images
+|   |   |       .gitkeep
+|   |   |       
+|   |   +---logo
+|   |   |       .gitkeep
+|   |   |       
+|   |   +---mockups
+|   |   |   +---android
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   +---ipad
+|   |   |   |       .gitkeep
+|   |   |   |       
+|   |   |   \---iphone
+|   |   |           .gitkeep
+|   |   |           
 |   |   +---ui
+|   |   |       .gitkeep
+|   |   |       
 |   |   \---wireframes
+|   |           .gitkeep
+|   |           
 |   +---meeting-notes
 |   |       2026-07-08 Kickoff.md
 |   |       2026-07-10 AI.md
@@ -216,9 +304,45 @@ C:.
 |           Meeting.md
 |           
 +---firebase
+|       .gitkeep
+|       
 +---functions
+|       .gitkeep
+|       
 +---landing
+|       .gitkeep
+|       
 +---mobile
+|       .gitkeep
+|       
++---scratch
+|       repair_encoding.py
+|       
 +---scripts
+|       .gitkeep
+|       
++---shared
+|   +---constants
+|   |       .gitkeep
+|   |       
+|   +---design-system
+|   |       .gitkeep
+|   |       
+|   +---models
+|   |       .gitkeep
+|   |       
+|   +---packages
+|   |       .gitkeep
+|   |       
+|   +---theme
+|   |       .gitkeep
+|   |       
+|   \---utils
+|           .gitkeep
+|           
 +---tools
+|       .gitkeep
+|       
 \---web
+        .gitkeep
+        
