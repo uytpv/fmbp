@@ -4,7 +4,7 @@ part 'meal_plan_item.freezed.dart';
 part 'meal_plan_item.g.dart';
 
 @freezed
-class MealPlanItem with _$MealPlanItem {
+abstract class MealPlanItem with _$MealPlanItem {
   const factory MealPlanItem({
     required String mealPlanId,
     required DateTime date,

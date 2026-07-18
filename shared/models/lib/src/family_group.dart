@@ -4,7 +4,7 @@ part 'family_group.freezed.dart';
 part 'family_group.g.dart';
 
 @freezed
-class FamilyGroup with _$FamilyGroup {
+abstract class FamilyGroup with _$FamilyGroup {
   const factory FamilyGroup({
     required String id,
     required String name,

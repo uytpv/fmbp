@@ -4,7 +4,7 @@ part 'pantry_item.freezed.dart';
 part 'pantry_item.g.dart';
 
 @freezed
-class PantryItem with _$PantryItem {
+abstract class PantryItem with _$PantryItem {
   const factory PantryItem({
     required String id,
     required String familyId,

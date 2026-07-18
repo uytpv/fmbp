@@ -4,7 +4,7 @@ part 'pantry_batch.freezed.dart';
 part 'pantry_batch.g.dart';
 
 @freezed
-class PantryBatch with _$PantryBatch {
+abstract class PantryBatch with _$PantryBatch {
   const factory PantryBatch({
     required String pantryItemId,
     required DateTime purchaseDate,

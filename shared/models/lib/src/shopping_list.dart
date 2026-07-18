@@ -4,7 +4,7 @@ part 'shopping_list.freezed.dart';
 part 'shopping_list.g.dart';
 
 @freezed
-class ShoppingList with _$ShoppingList {
+abstract class ShoppingList with _$ShoppingList {
   const factory ShoppingList({
     required String id,
     required String familyId,

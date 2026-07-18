@@ -4,7 +4,7 @@ part 'food_transaction.freezed.dart';
 part 'food_transaction.g.dart';
 
 @freezed
-class FoodTransaction with _$FoodTransaction {
+abstract class FoodTransaction with _$FoodTransaction {
   const factory FoodTransaction({
     required String id,
     required String budgetPeriodId,
