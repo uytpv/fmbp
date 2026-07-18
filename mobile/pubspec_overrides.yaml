@@ -1,0 +1,6 @@
+# melos_managed_dependency_overrides: fmbp_constants,fmbp_models
+dependency_overrides:
+  fmbp_constants:
+    path: ..\\shared\\constants
+  fmbp_models:
+    path: ..\\shared\\models

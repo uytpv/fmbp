@@ -1,0 +1,10 @@
+name: fmbp_workspace
+description: "Monorepo workspace for Family Meal Budget Planner"
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.7
+
+dev_dependencies:
+  melos: ^6.0.0

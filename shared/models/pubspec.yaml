@@ -1,0 +1,25 @@
+name: fmbp_models
+description: "Shared domain models package for Family Meal Budget Planner"
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  # Freezed & JSON
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Utilities
+  uuid: ^4.5.1
+
+  # Local path dependency to constants
+  fmbp_constants:
+    path: ../constants
+
+dev_dependencies:
+  # Generators
+  build_runner: ^2.4.15
+  freezed: ^3.0.0
+  json_serializable: ^6.9.5

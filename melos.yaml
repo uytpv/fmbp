@@ -1,0 +1,23 @@
+name: fmbp_monorepo
+
+packages:
+  - mobile
+  - shared/constants
+  - shared/models
+
+scripts:
+  bootstrap:
+    description: Bootstrap the workspace packages
+    run: melos bootstrap
+
+  clean:
+    description: Clean all packages build/cache
+    run: melos clean
+
+  codegen:
+    description: Run build_runner code generation for all packages
+    run: melos exec --depends-on="build_runner" -- "flutter pub run build_runner build --delete-conflicting-outputs --force-jit"
+
+  test:
+    description: Run tests for all packages
+    run: melos exec -- "flutter test"

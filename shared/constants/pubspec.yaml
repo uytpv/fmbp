@@ -1,0 +1,7 @@
+name: fmbp_constants
+description: "Shared constants package for Family Meal Budget Planner"
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.7

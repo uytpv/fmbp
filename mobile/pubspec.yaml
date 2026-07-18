@@ -1,0 +1,72 @@
+name: fmbp
+description: "Family Meal Budget Planner - Quản lý bữa ăn và ngân sách gia đình"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Local shared packages
+  fmbp_constants:
+    path: ../shared/constants
+  fmbp_models:
+    path: ../shared/models
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^8.2.0
+  flutter_svg: ^2.0.17
+
+  # State Management
+  flutter_riverpod: ^3.1.0
+  riverpod_annotation: ^4.0.0
+
+  # Navigation
+  go_router: ^17.3.0
+
+  # Firebase
+  firebase_core: ^4.12.1
+  cloud_firestore: ^6.7.1
+  firebase_auth: ^6.5.6
+
+  # Local Database
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
+
+  # Storage & Preferences
+  shared_preferences: ^2.5.3
+
+  # Networking (for AI Gateway)
+  dio: ^5.7.0
+
+  # Utilities
+  intl: ^0.20.2
+  uuid: ^4.5.1
+  equatable: ^2.0.7
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code Generation
+  riverpod_generator: ^4.0.0+1
+  freezed: ^3.0.0
+  json_serializable: ^6.9.5
+  build_runner: ^2.4.15
+  isar_community_generator: ^3.3.2
+
+  # Testing
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  generate: true

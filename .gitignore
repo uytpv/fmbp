@@ -1,0 +1,87 @@
+# ==============================================================================
+# FMBP Monorepo - Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# IDEs & Editors
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# Python & AI Gateway (ai-server/)
+# ------------------------------------------------------------------------------
+ai-server/__pycache__/
+ai-server/*.pyc
+ai-server/*.pyo
+ai-server/*.pyd
+ai-server/.venv/
+ai-server/venv/
+ai-server/env/
+ai-server/ENV/
+ai-server/.env
+ai-server/.pytest_cache/
+
+# ------------------------------------------------------------------------------
+# Node.js & Cloud Functions (functions/)
+# ------------------------------------------------------------------------------
+functions/node_modules/
+functions/lib/
+functions/npm-debug.log*
+functions/yarn-debug.log*
+functions/yarn-error.log*
+functions/.env
+functions/.runtimeconfig.json
+
+# ------------------------------------------------------------------------------
+# Firebase Local Emulators
+# ------------------------------------------------------------------------------
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+hub-debug.log
+pubsub-debug.log
+storage-debug.log
+database-debug.log
+firebase/.firebase/
+firebase/firestore-debug.log
+firebase/firebase-debug.log
+
+# ------------------------------------------------------------------------------
+# Dart & Flutter (mobile/ and shared packages)
+# ------------------------------------------------------------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Local configuration and credentials
+mobile/.env
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+
+# Generated code files (Optional: keep them if you want immediate compilation on clone,
+# but standard practice is to rebuild them using build_runner. Let's ignore build outputs)
+*.freezed.dart
+*.g.dart
+
+# ------------------------------------------------------------------------------
+# Temporary Scratch files
+# ------------------------------------------------------------------------------
+scratch/
+temp/
+tmp/
+*.log
