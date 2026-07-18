@@ -37,16 +37,16 @@ Cốt lõi của việc quản lý tiền bạc là tính minh bạch và tức 
 ## 7. Data Model
 - BudgetPeriod:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key)
+  - family_id: UUID (Foreign Key)
   - start_date: Date
   - end_date: Date
-  - llocated_amount: Decimal (Số tiền cấp phát)
+  - allocated_amount: Decimal (Số tiền cấp phát)
   - spent_amount: Decimal (Số tiền đã tiêu)
 - FoodTransaction:
   - id: UUID (Primary Key)
-  - udget_period_id: UUID (Foreign Key)
-  - mount: Decimal
-  - 	ransaction_type: String (GROCERY, DINING_OUT, EXPERT_RECIPE)
+  - budget_period_id: UUID (Foreign Key)
+  - amount: Decimal
+  - transaction_type: String (GROCERY, DINING_OUT, EXPERT_RECIPE)
   - description: String
   - created_at: DateTime
 

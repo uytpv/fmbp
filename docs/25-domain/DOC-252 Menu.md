@@ -36,20 +36,20 @@ Kế hoạch ăn uống là SSOT cho các hoạt động tiêu dùng tiếp theo
 ## 7. Data Model
 - MealPlan:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key)
+  - family_id: UUID (Foreign Key)
   - start_date: Date
   - end_date: Date
-  - 	otal_estimated_cost: Decimal
+  - total_estimated_cost: Decimal
   - status: String (DRAFT, ACTIVE, COMPLETED)
 - MealPlanItem:
   - meal_plan_id: UUID (Foreign Key)
   - date: Date
   - meal_type: String (BREAKFAST, LUNCH, DINNER, SNACK)
-  - ecipe_id: UUID (Foreign Key)
+  - recipe_id: UUID (Foreign Key)
   - servings: Integer
 
 ## 8. Flow
-- Người dùng chọn tuần cần lên thực đơn -> Kéo thả các món ăn vào từng bữa -> Hệ thống cập nhật 	otal_estimated_cost thời gian thực -> Nhấn "Kích hoạt" -> Shopping List được sinh ra tự động.
+- Người dùng chọn tuần cần lên thực đơn -> Kéo thả các món ăn vào từng bữa -> Hệ thống cập nhật total_estimated_cost thời gian thực -> Nhấn "Kích hoạt" -> Shopping List được sinh ra tự động.
 
 ## 9. API
 - POST /api/v1/meal-plans

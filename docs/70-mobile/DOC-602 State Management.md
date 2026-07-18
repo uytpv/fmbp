@@ -23,7 +23,7 @@ Khi một thành viên gia đình cập nhật tủ lạnh Pantry, dữ liệu t
 
 ## 4. Functional Requirements
 - Sử dụng **Flutter Riverpod** làm thư viện quản lý trạng thái chính thức của dự án.
-- Thiết kế các Provider riêng biệt cho từng khối nghiệp vụ độc lập: udgetProvider, pantryProvider, shoppingListProvider.
+- Thiết kế các Provider riêng biệt cho từng khối nghiệp vụ độc lập: budgetProvider, pantryProvider, shoppingListProvider.
 - Cơ chế lắng nghe dòng dữ liệu thời gian thực (StreamProvider) từ Firestore.
 
 ## 5. Non-Functional Requirements

@@ -1,0 +1,139 @@
+Path                                                         | Lines | Size   | Status     | Title
+------------------------------------------------------------------------------------------------------------------------
+docs/00-vision/DOC-000 Product Vision.md                     | 199   | 6167   | Draft      | Product Vision
+docs/00-vision/DOC-001 Mission.md                            | 172   | 4925   | Draft      | Mission
+docs/00-vision/DOC-002 Core Values.md                        | 248   | 6056   | Draft      | Core Values
+docs/00-vision/DOC-003 Product Philosophy.md                 | 321   | 8620   | Draft      | Product Philosophy
+docs/00-vision/DOC-004 Success Metrics.md                    | 247   | 4633   | Draft      | Success Metrics
+docs/00-vision/DOC-005 Product Roadmap.md                    | 231   | 3982   | Draft      | Product Roadmap
+docs/10-business/DOC-100 Business Model.md                   | 84    | 6788   | Draft      | Business Model
+docs/10-business/DOC-101 Pricing.md                          | 88    | 5887   | Draft      | Pricing
+docs/10-business/DOC-102 Subscription.md                     | 75    | 5839   | Draft      | Subscription Management
+docs/10-business/DOC-103 Marketplace.md                      | 79    | 6552   | Draft      | Recipe & Meal Plan Marketplace
+docs/10-business/DOC-104 Affiliate.md                        | 74    | 6803   | Draft      | Affiliate Integration
+docs/10-business/DOC-105 Advertisement.md                    | 77    | 6424   | Draft      | Advertisement & Sponsorship Management
+docs/10-business/DOC-106 International.md                    | 75    | 6589   | Draft      | Internationalization & Localization Strategy
+docs/10-business/DOC-107 Financial Projection.md             | 72    | 5436   | Draft      | Financial Projection (3-Year Plan)
+docs/15-research/DOC-150 Research Framework.md               | 232   | 5079   | Draft      | Research Framework
+docs/15-research/Revolut.md                                  | 107   | 11444  | Draft      | Revolut Competitor Analysis
+docs/15-research/Samsung Food.md                             | 110   | 12744  | Draft      | Samsung Food Competitor Analysis
+docs/15-research/YNAB.md                                     | 104   | 10355  | Draft      | YNAB (You Need A Budget) Competitor Analysis
+docs/20-product/DOC-200 PRD.md                               | 70    | 3456   | Draft      | Product Requirement Document (PRD)
+docs/20-product/DOC-201 Personas.md                          | 60    | 2321   | Draft      | User Personas
+docs/20-product/DOC-202 User Journey.md                      | 61    | 2382   | Draft      | User Journey Map
+docs/20-product/DOC-203 User Stories.md                      | 63    | 2773   | Draft      | User Stories
+docs/20-product/DOC-204 Feature List.md                      | 75    | 2858   | Draft      | Feature List & Prioritization
+docs/20-product/DOC-205 Product Scope.md                     | 60    | 2148   | Draft      | Product Scope Specification
+docs/20-product/DOC-206 Release Plan.md                      | 60    | 2256   | Draft      | Release Plan
+docs/25-domain/DOC-250 Ingredient.md                         | 74    | 3361   | Draft      | Ingredient Domain Specification
+docs/25-domain/DOC-251 Recipe.md                             | 77    | 3280   | Draft      | Recipe Domain Specification
+docs/25-domain/DOC-252 Menu.md                               | 77    | 3289   | Draft      | Menu (Meal Plan) Domain Specification
+docs/25-domain/DOC-253 Pantry.md                             | 75    | 3303   | Draft      | Pantry (Inventory) Domain Specification
+docs/25-domain/DOC-254 Shopping.md                           | 76    | 3679   | Draft      | Shopping List Domain Specification
+docs/25-domain/DOC-255 Budget.md                             | 78    | 3766   | Draft      | Budget Domain Specification
+docs/25-domain/DOC-256 Family.md                             | 84    | 4164   | Draft      | Family Group & User Domain Specification
+docs/25-domain/DOC-257 AI.md                                 | 69    | 4322   | Draft      | AI Models & Workflows Domain Specification
+docs/30-design/DOC-300 Design System.md                      | 63    | 2384   | Draft      | Design System Specification
+docs/30-design/DOC-301 Typography.md                         | 66    | 2393   | Draft      | Typography Specification
+docs/30-design/DOC-302 Colors.md                             | 68    | 2447   | Draft      | Color Palette & Mappings
+docs/30-design/DOC-303 Components.md                         | 62    | 2450   | Draft      | UI Components Library
+docs/30-design/DOC-304 Icons.md                              | 69    | 2331   | Draft      | Iconography Specification
+docs/30-design/DOC-305 Accessibility.md                      | 63    | 2846   | Draft      | Accessibility Specification (WCAG)
+docs/30-design/DOC-306 Responsive.md                         | 63    | 2380   | Draft      | Responsive & Adaptive Design
+docs/30-design/DOC-307 Dark Mode.md                          | 62    | 2548   | Draft      | Dark Mode Specification
+docs/35-ux/DOC-350 User Flow.md                              | 63    | 2877   | Draft      | Core User Flows
+docs/35-ux/DOC-351 Information Architecture.md               | 65    | 2779   | Draft      | Information Architecture & Sitemap
+docs/35-ux/DOC-352 Wireflow.md                               | 67    | 2557   | Draft      | Wireflow Layout Specifications
+docs/35-ux/DOC-353 Interaction.md                            | 67    | 2879   | Draft      | Interaction & Motion Specification
+docs/35-ux/DOC-354 Navigation UX.md                          | 62    | 3126   | Draft      | Navigation UX Specification
+docs/40-platform/DOC-400 Architecture.md                     | 62    | 2441   | Draft      | System Architecture
+docs/40-platform/DOC-401 Firebase.md                         | 61    | 2458   | Draft      | Firebase Integration
+docs/40-platform/DOC-402 Firestore.md                        | 62    | 2422   | Draft      | Cloud Firestore Database Schema
+docs/40-platform/DOC-403 Cloud Function.md                   | 62    | 2450   | Draft      | Firebase Cloud Functions
+docs/40-platform/DOC-404 Authentication.md                   | 62    | 2532   | Draft      | User Authentication Specification
+docs/40-platform/DOC-405 Security.md                         | 63    | 2547   | Draft      | System Security & Firewalls
+docs/40-platform/DOC-406 Offline.md                          | 61    | 2980   | Draft      | Offline-First Synchronization Strategy
+docs/40-platform/DOC-407 Notification.md                     | 63    | 3217   | Draft      | Push Notification System
+docs/40-platform/DOC-408 Deployment.md                       | 62    | 2850   | Draft      | Client Build & Deployment Specs
+docs/50-infrastructure/DOC-550 Environment.md                | 64    | 2848   | Draft      | Environment Configuration
+docs/50-infrastructure/DOC-551 Secrets.md                    | 61    | 2460   | Draft      | Secret & Key Management
+docs/50-infrastructure/DOC-552 CI-CD.md                      | 61    | 2622   | Draft      | CI-CD Pipeline Architecture
+docs/50-infrastructure/DOC-553 Github Actions.md             | 62    | 2121   | Draft      | GitHub Actions Workflows
+docs/50-infrastructure/DOC-554 Release.md                    | 61    | 2402   | Draft      | Release Life Cycle
+docs/50-infrastructure/DOC-555 Versioning.md                 | 63    | 2748   | Draft      | Versioning Policy
+docs/50-infrastructure/DOC-556 Monitoring.md                 | 62    | 2871   | Draft      | System Monitoring & Alerting
+docs/50-infrastructure/DOC-557 Backup & Recovery.md          | 63    | 3238   | Draft      | Database Backup & Recovery Plan
+docs/60-backend/DOC-500 API.md                               | 61    | 2491   | Draft      | API Specifications
+docs/60-backend/DOC-501 Database.md                          | 61    | 2882   | Draft      | Database Architecture (SQL & Graph)
+docs/60-backend/DOC-502 Scheduler.md                         | 62    | 2869   | Draft      | Background Schedulers & Cron Jobs
+docs/60-backend/DOC-503 Price Engine.md                      | 64    | 3480   | Draft      | Price Engine Specification
+docs/60-backend/DOC-504 AI Gateway.md                        | 63    | 3299   | Draft      | AI Gateway Service
+docs/60-backend/DOC-505 Search.md                            | 62    | 3043   | Draft      | Recipe & Ingredient Search Engine
+docs/60-backend/DOC-506 Recommendation.md                    | 62    | 3266   | Draft      | Meal Recommendation Engine
+docs/70-admin/DOC-700 Dashboard.md                           | 64    | 2783   | Draft      | Admin Dashboard Specifications
+docs/70-admin/DOC-701 User.md                                | 66    | 3236   | Draft      | Admin User Management Portal
+docs/70-admin/DOC-702 Recipe.md                              | 63    | 3161   | Draft      | Admin Recipe Moderation Specifications
+docs/70-admin/DOC-703 Ingredient.md                          | 63    | 3355   | Draft      | Admin Ingredient Master List Specs
+docs/70-admin/DOC-704 Food Price.md                          | 63    | 3317   | Draft      | Admin Food Price Database Specs
+docs/70-admin/DOC-705 Moderation.md                          | 65    | 3587   | Draft      | Admin Marketplace Moderation Specs
+docs/70-admin/DOC-706 Analytics.md                           | 62    | 3273   | Draft      | Admin Analytics Portal Specifications
+docs/70-mobile/DOC-600 Flutter.md                            | 62    | 2519   | Draft      | Flutter Mobile App Specification
+docs/70-mobile/DOC-601 Navigation.md                         | 62    | 2256   | Draft      | Mobile Navigation Specs
+docs/70-mobile/DOC-602 State Management.md                   | 62    | 2849   | Draft      | Mobile State Management
+docs/70-mobile/DOC-603 Local Storage.md                      | 62    | 2683   | Draft      | Mobile Local Database Specifications
+docs/70-mobile/DOC-604 Offline.md                            | 62    | 2922   | Draft      | Mobile Offline Mode Specs
+docs/70-mobile/DOC-605 Sync.md                               | 61    | 2963   | Draft      | Mobile Two-Way Data Sync Engine
+docs/75-web/DOC-750 Flutter Web.md                           | 62    | 2663   | Draft      | Flutter Web Integration
+docs/75-web/DOC-751 Responsive.md                            | 61    | 2752   | Draft      | Web Responsive Grid Specs
+docs/75-web/DOC-752 SEO.md                                   | 65    | 2803   | Draft      | Web App SEO Guidelines
+docs/75-web/DOC-753 PWA.md                                   | 62    | 2888   | Draft      | Progressive Web App Specifications
+docs/75-web/DOC-754 Browser Support.md                       | 65    | 2856   | Draft      | Web Browser Compatibility Matrix
+docs/76-website/DOC-760 Landing.md                           | 63    | 3326   | Draft      | Landing Page Specification
+docs/76-website/DOC-761 SEO.md                               | 62    | 2894   | Draft      | Landing Page SEO Strategy
+docs/76-website/DOC-762 Blog.md                              | 61    | 3013   | Draft      | Blog Section Specification
+docs/76-website/DOC-763 Download Page.md                     | 64    | 2800   | Draft      | App Download Page Specs
+docs/80-ai/DOC-800 AI Overview.md                            | 61    | 2323   | Draft      | AI Strategy & Architecture Overview
+docs/80-ai/DOC-801 Meal Planner.md                           | 61    | 2271   | Draft      | AI Meal Planner Agent Specs
+docs/80-ai/DOC-802 Recipe Generator.md                       | 61    | 2430   | Draft      | AI Recipe Customization Spec
+docs/80-ai/DOC-803 Budget Assistant.md                       | 61    | 2597   | Draft      | AI Financial Budget Assistant
+docs/80-ai/DOC-804 Shopping Assistant.md                     | 61    | 2455   | Draft      | AI Shopping Assistant Specs
+docs/80-ai/DOC-805 OCR.md                                    | 62    | 2831   | Draft      | Receipt OCR & NLP Extraction Spec
+docs/80-ai/DOC-806 Local LLM.md                              | 61    | 2800   | Draft      | Local LLM Infrastructure Specification
+docs/80-ai/DOC-807 Cost Optimization.md                      | 61    | 2852   | Draft      | AI Cost & Token Optimization Specifications
+docs/90-release/DOC-900 MVP.md                               | 25    | 354    | Draft      | MVP
+docs/90-release/DOC-901 V1.md                                | 25    | 352    | Draft      | V1
+docs/90-release/DOC-902 V2.md                                | 25    | 352    | Draft      | V2
+docs/90-release/DOC-903 Global.md                            | 25    | 360    | Draft      | Global
+docs/90-release/DOC-904 Enterprise.md                        | 25    | 368    | Draft      | Enterprise
+docs/95-testing/DOC-950 Test Strategy.md                     | 63    | 2587   | Draft      | Quality Assurance & Test Strategy
+docs/95-testing/DOC-951 Unit Test.md                         | 62    | 2638   | Draft      | Unit Testing Specifications
+docs/95-testing/DOC-952 Widget Test.md                       | 62    | 2672   | Draft      | Widget Testing Specifications
+docs/95-testing/DOC-953 Integration Test.md                  | 61    | 2658   | Draft      | Integration Testing specifications
+docs/95-testing/DOC-954 E2E.md                               | 61    | 2923   | Draft      | End-to-End (E2E) Testing Specs
+docs/95-testing/DOC-955 UAT.md                               | 62    | 3308   | Draft      | User Acceptance Testing (UAT) Guidelines
+docs/98-legal/DOC-980 Privacy Policy.md                      | 62    | 3132   | Draft      | Privacy Policy
+docs/98-legal/DOC-981 Terms of Service.md                    | 62    | 3082   | Draft      | Terms of Service
+docs/98-legal/DOC-982 AI Usage Policy.md                     | 61    | 3099   | Draft      | AI Usage & Safety Policy
+docs/98-legal/DOC-983 Cookie Policy.md                       | 61    | 2672   | Draft      | Cookie & Tracking Policy
+docs/98-legal/DOC-984 Open Source License.md                 | 63    | 2824   | Draft      | Open Source License Specifications
+docs/98-legal/DOC-985 Third-party Licenses.md                | 64    | 3198   | Draft      | Third-party Licenses Compliance
+docs/99-decisions/ADR-001 Firebase First.md                  | 60    | 2617   | Accepted   | Architectural Decision - Firebase as Primary Backend
+docs/99-decisions/ADR-002 Flutter.md                         | 61    | 2583   | Accepted   | Architectural Decision - Flutter for Multi-platform Clients
+docs/99-decisions/ADR-003 AI Gateway.md                      | 61    | 2464   | Accepted   | Architectural Decision - AI Gateway Architecture
+docs/99-decisions/ADR-004 Firestore.md                       | 61    | 2922   | Accepted   | Architectural Decision - NoSQL Firestore as Primary Database
+docs/CHANGELOG.md                                            | 25    | 359    | Draft      | CHANGELOG
+docs/Coding Standard.md                                      | 25    | 371    | Draft      | Coding Standard
+docs/Glossary.md                                             | 25    | 357    | Draft      | Glossary
+docs/Overall Main Concpept Specification.md                  | 542   | 8608   | Draft      | Overall Main Concpept Specification
+docs/README.md                                               | 25    | 353    | Draft      | README
+docs/Release Notes.md                                        | 0     | 0      | Unknown    | Unknown
+docs/meeting-notes/2026-07-08 Kickoff.md                     | 25    | 377    | Draft      | 2026-07-08 Kickoff
+docs/meeting-notes/2026-07-10 AI.md                          | 25    | 367    | Draft      | 2026-07-10 AI
+docs/meeting-notes/2026-07-15 Firebase.md                    | 25    | 379    | Draft      | 2026-07-15 Firebase
+docs/templates/ADR Template.md                               | 0     | 0      | Unknown    | Unknown
+docs/templates/API Template.md                               | 0     | 0      | Unknown    | Unknown
+docs/templates/Bug.md                                        | 0     | 0      | Unknown    | Unknown
+docs/templates/Document Template.md                          | 59    | 688    | Draft      | [Title]
+docs/templates/Epic.md                                       | 0     | 0      | Unknown    | Unknown
+docs/templates/Feature Template.md                           | 0     | 0      | Unknown    | Unknown
+docs/templates/Meeting.md                                    | 0     | 0      | Unknown    | Unknown

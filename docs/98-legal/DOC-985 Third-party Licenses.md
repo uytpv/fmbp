@@ -37,8 +37,7 @@ Việc vô tình tích hợp một thư viện nguồn mở có giấy phép lâ
 - Bảng danh mục giấy phép được phép và cấm sử dụng.
 
 ## 8. Flow
-- Dev thêm package mới -> Chạy 
-pm install / lutter pub get -> CI/CD quét giấy phép của package đó -> Nếu phát hiện giấy phép GPL -> Đánh dấu lỗi (Fail pipeline) -> Dev phải tìm thư viện thay thế.
+- Dev thêm package mới -> Chạy npm install / flutter pub get -> CI/CD quét giấy phép của package đó -> Nếu phát hiện giấy phép GPL -> Đánh dấu lỗi (Fail pipeline) -> Dev phải tìm thư viện thay thế.
 
 ## 9. API
 - Các công cụ CLI quét bản quyền (FOSSA, License Checker).

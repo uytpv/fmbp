@@ -36,8 +36,8 @@ Tài liệu định nghĩa thực thể Danh sách mua sắm, cơ chế tính to
 ## 7. Data Model
 - ShoppingList:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key)
-  - 	arget_date: Date
+  - family_id: UUID (Foreign Key)
+  - target_date: Date
   - status: String (PENDING, ACTIVE, COMPLETED)
 - ShoppingListItem:
   - shopping_list_id: UUID (Foreign Key)

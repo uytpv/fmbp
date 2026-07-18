@@ -29,7 +29,7 @@ Sử dụng Firebase làm hạ tầng Serverless giúp đẩy nhanh tốc độ 
 - Đảm bảo tính năng Offline Persistence của Firestore được bật mặc định trên ứng dụng Mobile.
 
 ## 6. Business Rules
-- Tất cả các dịch vụ Firebase phải được triển khai trên vùng máy chủ (Region) gần nhất với thị trường người dùng mục tiêu (đối với Việt Nam là sia-east2 hoặc sia-southeast1).
+- Tất cả các dịch vụ Firebase phải được triển khai trên vùng máy chủ (Region) gần nhất với thị trường người dùng mục tiêu (đối với Việt Nam là asia-east2 hoặc asia-southeast1).
 
 ## 7. Data Model
 - Sơ đồ Firestore Collections.

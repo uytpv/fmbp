@@ -33,7 +33,7 @@ Xây dựng lòng tin tuyệt đối với khách hàng về mặt an toàn thô
 - Nền tảng cam kết **không bán dữ liệu cá nhân hay thói quen ăn uống của người dùng** cho bất kỳ đơn vị quảng cáo bên thứ ba nào.
 
 ## 7. Data Model
-- UserConsent: Lưu giữ lịch sử chấp thuận chính sách bảo mật của từng tài khoản người dùng (user_id, policy_version, ccepted_at, ip_address).
+- UserConsent: Lưu giữ lịch sử chấp thuận chính sách bảo mật của từng tài khoản người dùng (user_id, policy_version, accepted_at, ip_address).
 
 ## 8. Flow
 - Người dùng đăng ký tài khoản -> Hiển thị hộp kiểm "Tôi đồng ý với Chính sách bảo mật" -> Người dùng tick chọn và nhấn Đăng ký -> Hệ thống ghi nhận vào UserConsent -> Cho phép truy cập app.

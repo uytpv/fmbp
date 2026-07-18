@@ -36,7 +36,7 @@ Lãng phí thực phẩm lớn nhất thường diễn ra do người dùng quê
 ## 7. Data Model
 - PantryItem:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key)
+  - family_id: UUID (Foreign Key)
   - ingredient_id: UUID (Foreign Key)
   - quantity: Decimal
   - unit: String

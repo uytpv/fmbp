@@ -16,14 +16,14 @@ Related Documents:
 Đặc tả chi tiết các tệp cấu hình Workflow trong thư mục .github/workflows/ của dự án để tự động hóa các tác vụ CI/CD bằng GitHub Actions.
 
 ## 2. Scope
-Áp dụng cho các workflows: lutter-ci.yml, irebase-backend-cd.yml, elease-ota.yml.
+Áp dụng cho các workflows: flutter-ci.yml, firebase-backend-cd.yml, release-ota.yml.
 
 ## 3. Business Context
 Cung cấp tài liệu cấu hình chi tiết giúp các kỹ sư DevOps dễ dàng bảo trì và sửa đổi pipeline khi dự án bổ sung công cụ hoặc cấu trúc thư mục thay đổi.
 
 ## 4. Functional Requirements
-- lutter-ci: Cài đặt Flutter SDK, chạy lutter pub get, lutter test, lutter analyze.
-- irebase-backend-cd: Triển khai các Cloud Functions và cấu hình Firestore Security Rules.
+- flutter-ci: Cài đặt Flutter SDK, chạy flutter pub get, flutter test, flutter analyze.
+- firebase-backend-cd: Triển khai các Cloud Functions và cấu hình Firestore Security Rules.
 
 ## 5. Non-Functional Requirements
 - Sử dụng cơ chế lưu bộ nhớ đệm (Caching dependency directories) để giảm thời gian build của GitHub runner.

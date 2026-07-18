@@ -16,17 +16,17 @@ Related Documents:
 Định cấu hình SEO và quản lý thu thập dữ liệu (Search Engine Indexing) cho ứng dụng Web chính để đảm bảo bảo mật dữ liệu và tối ưu hóa tài nguyên máy chủ.
 
 ## 2. Scope
-Áp dụng cho tệp tin obots.txt, các thẻ meta của ứng dụng Web, và thiết lập cấu hình chặn index đối với các trang quản trị và tài khoản cá nhân.
+Áp dụng cho tệp tin robots.txt, các thẻ meta của ứng dụng Web, và thiết lập cấu hình chặn index đối với các trang quản trị và tài khoản cá nhân.
 
 ## 3. Business Context
 Ứng dụng Web là nơi chứa thông tin cá nhân nhạy cảm của người dùng (ngân sách, thực phẩm gia đình). Việc vô tình để các công cụ tìm kiếm (Google, Bing) lập chỉ mục (index) và hiển thị các trang này trên trang kết quả tìm kiếm công cộng là một sự cố bảo mật nghiêm trọng.
 
 ## 4. Functional Requirements
-- Định cấu hình chặn lập chỉ mục hoàn toàn trên toàn bộ tên miền phụ của ứng dụng Web (ví dụ: pp.fmpb.com).
-- Thiết lập tệp obots.txt chuẩn để yêu cầu các bot tìm kiếm bỏ qua thư mục ứng dụng.
+- Định cấu hình chặn lập chỉ mục hoàn toàn trên toàn bộ tên miền phụ của ứng dụng Web (ví dụ: app.fmpb.com).
+- Thiết lập tệp robots.txt chuẩn để yêu cầu các bot tìm kiếm bỏ qua thư mục ứng dụng.
 
 ## 5. Non-Functional Requirements
-- Đảm bảo các thẻ meta obots có giá trị 
+- Đảm bảo các thẻ meta robots có giá trị 
 oindex, nofollow được chèn vào phần đầu <head> của mã nguồn HTML ứng dụng Web.
 
 ## 6. Business Rules
@@ -36,7 +36,7 @@ oindex, nofollow được chèn vào phần đầu <head> của mã nguồn HTML
 - Cấu hình file robots.txt.
 
 ## 8. Flow
-- Bot tìm kiếm truy cập pp.fmpb.com/robots.txt -> robots.txt trả về lệnh Disallow: / -> Bot quay đầu và không thu thập dữ liệu trang.
+- Bot tìm kiếm truy cập app.fmpb.com/robots.txt -> robots.txt trả về lệnh Disallow: / -> Bot quay đầu và không thu thập dữ liệu trang.
 
 ## 9. API
 - Không áp dụng.

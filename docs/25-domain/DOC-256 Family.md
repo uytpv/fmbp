@@ -36,25 +36,24 @@ Quản lý ăn uống và tài chính gia đình là hoạt động tập thể 
 ## 7. Data Model
 - FamilyGroup:
   - id: UUID (Primary Key)
-  - 
-ame: String (Tên gia đình, VD: Gia đình Bình An)
+  - name: String (Tên gia đình, VD: Gia đình Bình An)
   - owner_id: UUID (Foreign Key)
   - created_at: DateTime
 - User:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key, Nullable)
+  - family_id: UUID (Foreign Key, Nullable)
   - email: String (Unique)
   - display_name: String
-  - ole: String (OWNER, ADMIN, MEMBER, KID)
+  - role: String (OWNER, ADMIN, MEMBER, KID)
 - FamilyInvitation:
   - id: UUID (Primary Key)
-  - amily_id: UUID (Foreign Key)
+  - family_id: UUID (Foreign Key)
   - invite_code: String (Unique token)
   - expires_at: DateTime
   - is_used: Boolean
 
 ## 8. Flow
-- Người dùng A tạo nhóm "Gia đình nhà A" -> Hệ thống sinh mã QR/Link mời -> Người dùng B quét mã QR trên điện thoại -> Đồng ý tham gia -> Người dùng B được liên kết vào amily_id của nhóm -> Cả hai cùng thấy tủ lạnh và ngân sách chung ngay lập tức.
+- Người dùng A tạo nhóm "Gia đình nhà A" -> Hệ thống sinh mã QR/Link mời -> Người dùng B quét mã QR trên điện thoại -> Đồng ý tham gia -> Người dùng B được liên kết vào family_id của nhóm -> Cả hai cùng thấy tủ lạnh và ngân sách chung ngay lập tức.
 
 ## 9. API
 - POST /api/v1/families

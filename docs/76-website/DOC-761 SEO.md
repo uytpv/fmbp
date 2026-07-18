@@ -22,7 +22,7 @@ Bao gồm nghiên cứu từ khóa (Keywords), cấu hình On-page SEO (Thẻ ti
 Chi phí chạy quảng cáo ngày càng đắt đỏ. SEO là kênh tiếp thị bền vững nhất trong dài hạn giúp dự án liên tục có lượt tải app mới mỗi ngày từ những người dùng đang tìm kiếm giải pháp cho câu hỏi "cách tiết kiệm tiền chợ hàng tuần" hoặc "lập thực đơn gia đình".
 
 ## 4. Functional Requirements
-- Tối ưu cấu trúc URL thân thiện (Semantic URLs, ví dụ: mpb.com/blog/cach-tiet-kiem-tien-cho).
+- Tối ưu cấu trúc URL thân thiện (Semantic URLs, ví dụ: fmpb.com/blog/cach-tiet-kiem-tien-cho).
 - Tự động sinh tệp chỉ mục sitemap.xml và khai báo tự động với Google Search Console.
 - Chèn thẻ dữ liệu cấu trúc Schema.org (SoftwareApplication markup) để hiển thị đánh giá sao và giá app đẹp mắt trên trang Google Search.
 

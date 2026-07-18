@@ -22,7 +22,7 @@ Quy định tiêu chuẩn viết và tổ chức các bài kiểm thử thành p
 Đảm bảo giao diện người dùng hoạt động chính xác về mặt hiển thị và tương tác vuốt chạm mà không cần phải khởi chạy toàn bộ ứng dụng trên thiết bị mô phỏng nặng nề.
 
 ## 4. Functional Requirements
-- Sử dụng công cụ lutter_test mặc định.
+- Sử dụng công cụ flutter_test mặc định.
 - Sử dụng phương pháp bơm dữ liệu giả lập (Widget Pump) để kích hoạt trạng thái giao diện.
 - Viết các bài kiểm thử kiểm tra sự xuất hiện của các phần tử văn bản, icon và hành vi kích hoạt callback khi nhấn nút.
 

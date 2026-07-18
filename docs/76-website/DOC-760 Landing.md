@@ -16,7 +16,7 @@ Related Documents:
 Đặc tả cấu trúc thông tin, bố cục thiết kế và nội dung tiếp thị của Trang chủ giới thiệu sản phẩm (Landing Page) nhằm tối ưu hóa tỷ lệ chuyển đổi khách truy cập thành lượt tải ứng dụng.
 
 ## 2. Scope
-Áp dụng cho trang web chính thức chạy ở tên miền gốc (ví dụ: mpb.com), định nghĩa các khối nội dung tiếp thị và các nút kêu gọi hành động (CTA).
+Áp dụng cho trang web chính thức chạy ở tên miền gốc (ví dụ: fmpb.com), định nghĩa các khối nội dung tiếp thị và các nút kêu gọi hành động (CTA).
 
 ## 3. Business Context
 Landing Page là bộ mặt thương hiệu của dự án trên internet. Đây là nơi tiếp cận khách hàng tiềm năng đầu tiên từ các chiến dịch chạy quảng cáo hoặc tìm kiếm tự nhiên. Giao diện trang chủ phải cực kỳ ấn tượng, truyền tải thông điệp nhanh trong 3 giây đầu và kích thích họ nhấn nút Tải app.

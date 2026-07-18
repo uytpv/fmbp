@@ -39,7 +39,7 @@ Related Documents:
 - Khởi chạy App -> Kiểm tra phiên đăng nhập -> Nạp State từ local storage -> Đồng bộ bất đồng bộ từ Cloud -> Hiển thị Dashboard.
 
 ## 9. API
-- Tích hợp Flutter SDK, Firebase Packages (irebase_core, cloud_firestore, irebase_auth).
+- Tích hợp Flutter SDK, Firebase Packages (firebase_core, cloud_firestore, firebase_auth).
 
 ## 10. Acceptance Criteria
 - Ứng dụng biên dịch thành công cho cả hai nền tảng mà không phát sinh cảnh báo lỗi deprecation nghiêm trọng của các thư viện phụ thuộc.

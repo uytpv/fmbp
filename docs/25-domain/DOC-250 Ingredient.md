@@ -37,14 +37,12 @@ Nguyên liệu là đơn vị cơ bản nhất của cả hệ thống thực đ
 ## 7. Data Model
 - Ingredient:
   - id: UUID (Primary Key)
-  - 
-ame: String (Tên chuẩn)
+  - name: String (Tên chuẩn)
   - category_id: UUID (Foreign Key)
-  - ase_unit: String (Đơn vị cơ sở, ví dụ: g, ml, piece)
-  - 
-utrition_info: JSON (Calo, Protein, Carbs, Fat trên 100g)
-  - liases: List<String> (Các tên gọi khác)
-  - verage_price: Decimal (Giá trung bình hiện tại)
+  - base_unit: String (Đơn vị cơ sở, ví dụ: g, ml, piece)
+  - nutrition_info: JSON (Calo, Protein, Carbs, Fat trên 100g)
+  - aliases: List<String> (Các tên gọi khác)
+  - average_price: Decimal (Giá trung bình hiện tại)
 
 ## 8. Flow
 - Thêm nguyên liệu mới -> Nhập tên và chọn nhóm thực phẩm -> Định cấu hình đơn vị chuẩn -> Lưu vào cơ sở dữ liệu dùng chung.

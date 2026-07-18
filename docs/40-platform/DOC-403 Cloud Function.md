@@ -24,7 +24,7 @@ Sử dụng Cloud Functions giúp cô lập logic nghiệp vụ quan trọng ở
 ## 4. Functional Requirements
 - onUserCreated: Tự động tạo hồ sơ người dùng cơ bản và liên kết mặc định khi đăng ký mới.
 - onPantryItemExpired: Trình kích hoạt định kỳ quét thực phẩm sắp hết hạn để gửi thông báo.
-- piSyncGrocery: Đồng bộ giỏ hàng với đối tác tiếp thị liên kết.
+- apiSyncGrocery: Đồng bộ giỏ hàng với đối tác tiếp thị liên kết.
 
 ## 5. Non-Functional Requirements
 - Đảm bảo thời gian khởi động lạnh (Cold start) của Cloud Functions dưới 2 giây.

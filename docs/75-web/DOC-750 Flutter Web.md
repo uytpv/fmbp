@@ -23,7 +23,7 @@ Cung cấp phiên bản Web giúp người dùng có thể dễ dàng quản lý
 
 ## 4. Functional Requirements
 - Biên dịch mã nguồn Flutter thành ứng dụng Web chạy trên môi trường trình duyệt.
-- Tự động cấu hình định tuyến URL (Web Routing) thân thiện với trình duyệt (ví dụ: pp.fmpb.com/meal-plan).
+- Tự động cấu hình định tuyến URL (Web Routing) thân thiện với trình duyệt (ví dụ: app.fmpb.com/meal-plan).
 
 ## 5. Non-Functional Requirements
 - Tối ưu hóa thời gian tải trang ban đầu (Initial load time) dưới 3 giây.
