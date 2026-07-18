@@ -1,0 +1,224 @@
+Folder PATH listing
+Volume serial number is 98C7-7B73
+C:.
+|   tree.txt
+|   update_docs.ps1
+|   update_docs_2.ps1
+|   update_docs_3.ps1
+|   
++---.github
++---admin
++---ai-server
++---docs
+|   |   CHANGELOG.md
+|   |   Coding Standard.md
+|   |   Glossary.md
+|   |   Overall Main Concpept Specification.md
+|   |   README.md
+|   |   
+|   +---00-vision
+|   |       DOC-000 Product Vision.md
+|   |       DOC-001 Mission.md
+|   |       DOC-002 Core Values.md
+|   |       DOC-003 Product Philosophy.md
+|   |       DOC-004 Success Metrics.md
+|   |       DOC-005 Product Roadmap.md
+|   |       
+|   +---10-business
+|   |       DOC-100 Business Model.md
+|   |       DOC-101 Pricing.md
+|   |       DOC-102 Subscription.md
+|   |       DOC-103 Marketplace.md
+|   |       DOC-104 Affiliate.md
+|   |       DOC-105 Advertisement.md
+|   |       DOC-106 International.md
+|   |       DOC-107 Financial Projection.md
+|   |       
+|   +---15-research
+|   |       ChatGPT.md
+|   |       Gemini.md
+|   |       Google Keep.md
+|   |       Mealime.md
+|   |       Money Lover.md
+|   |       Notion.md
+|   |       Paprika.md
+|   |       Samsung Food.md
+|   |       YNAB.md
+|   |       
+|   +---20-product
+|   |       DOC-200 PRD.md
+|   |       DOC-201 Personas.md
+|   |       DOC-202 User Journey.md
+|   |       DOC-203 User Stories.md
+|   |       DOC-204 Feature List.md
+|   |       DOC-205 Product Scope.md
+|   |       DOC-206 Release Plan.md
+|   |       
+|   +---25-domain
+|   |       DOC-250 Ingredient.md
+|   |       DOC-251 Recipe.md
+|   |       DOC-252 Menu.md
+|   |       DOC-253 Pantry.md
+|   |       DOC-254 Shopping.md
+|   |       DOC-255 Budget.md
+|   |       DOC-256 Family.md
+|   |       DOC-257 AI.md
+|   |       
+|   +---30-design
+|   |       DOC-300 Design System.md
+|   |       DOC-301 Typography.md
+|   |       DOC-302 Colors.md
+|   |       DOC-303 Components.md
+|   |       DOC-304 Icons.md
+|   |       DOC-305 Accessibility.md
+|   |       DOC-306 Responsive.md
+|   |       DOC-307 Dark Mode.md
+|   |       
+|   +---35-ux
+|   |       DOC-350 User Flow.md
+|   |       DOC-351 Information Architecture.md
+|   |       DOC-352 Wireflow.md
+|   |       DOC-353 Interaction.md
+|   |       DOC-354 Navigation UX.md
+|   |       
+|   +---40-platform
+|   |       DOC-400 Architecture.md
+|   |       DOC-401 Firebase.md
+|   |       DOC-402 Firestore.md
+|   |       DOC-403 Cloud Function.md
+|   |       DOC-404 Authentication.md
+|   |       DOC-405 Security.md
+|   |       DOC-406 Offline.md
+|   |       DOC-407 Notification.md
+|   |       DOC-408 Deployment.md
+|   |       
+|   +---50-infrastructure
+|   |       DOC-550 Environment.md
+|   |       DOC-551 Secrets.md
+|   |       DOC-552 CI-CD.md
+|   |       DOC-553 Github Actions.md
+|   |       DOC-554 Release.md
+|   |       DOC-555 Versioning.md
+|   |       DOC-556 Monitoring.md
+|   |       DOC-557 Backup & Recovery.md
+|   |       
+|   +---60-backend
+|   |       DOC-500 API.md
+|   |       DOC-501 Database.md
+|   |       DOC-502 Scheduler.md
+|   |       DOC-503 Price Engine.md
+|   |       DOC-504 AI Gateway.md
+|   |       DOC-505 Search.md
+|   |       DOC-506 Recommendation.md
+|   |       
+|   +---70-admin
+|   |       DOC-700 Dashboard.md
+|   |       DOC-701 User.md
+|   |       DOC-702 Recipe.md
+|   |       DOC-703 Ingredient.md
+|   |       DOC-704 Food Price.md
+|   |       DOC-705 Moderation.md
+|   |       DOC-706 Analytics.md
+|   |       
+|   +---70-mobile
+|   |       DOC-600 Flutter.md
+|   |       DOC-601 Navigation.md
+|   |       DOC-602 State Management.md
+|   |       DOC-603 Local Storage.md
+|   |       DOC-604 Offline.md
+|   |       DOC-605 Sync.md
+|   |       
+|   +---75-web
+|   |       DOC-750 Flutter Web.md
+|   |       DOC-751 Responsive.md
+|   |       DOC-752 SEO.md
+|   |       DOC-753 PWA.md
+|   |       DOC-754 Browser Support.md
+|   |       
+|   +---76-website
+|   |       DOC-760 Landing.md
+|   |       DOC-761 SEO.md
+|   |       DOC-762 Blog.md
+|   |       DOC-763 Download Page.md
+|   |       
+|   +---80-ai
+|   |   |   DOC-800 AI Overview.md
+|   |   |   DOC-801 Meal Planner.md
+|   |   |   DOC-802 Recipe Generator.md
+|   |   |   DOC-803 Budget Assistant.md
+|   |   |   DOC-804 Shopping Assistant.md
+|   |   |   DOC-805 OCR.md
+|   |   |   DOC-806 Local LLM.md
+|   |   |   DOC-807 Cost Optimization.md
+|   |   |   
+|   |   +---00-overview
+|   |   +---10-models
+|   |   +---20-prompts
+|   |   +---30-rag
+|   |   +---40-workflows
+|   |   +---50-cost
+|   |   \---60-guardrails
+|   +---90-release
+|   |       DOC-900 MVP.md
+|   |       DOC-901 V1.md
+|   |       DOC-902 V2.md
+|   |       DOC-903 Global.md
+|   |       DOC-904 Enterprise.md
+|   |       
+|   +---95-testing
+|   |       DOC-950 Test Strategy.md
+|   |       DOC-951 Unit Test.md
+|   |       DOC-952 Widget Test.md
+|   |       DOC-953 Integration Test.md
+|   |       DOC-954 E2E.md
+|   |       DOC-955 UAT.md
+|   |       
+|   +---98-legal
+|   |       DOC-980 Privacy Policy.md
+|   |       DOC-981 Terms of Service.md
+|   |       DOC-982 AI Usage Policy.md
+|   |       DOC-983 Cookie Policy.md
+|   |       DOC-984 Open Source License.md
+|   |       DOC-985 Third-party Licenses.md
+|   |       
+|   +---99-decisions
+|   |       ADR-001 Firebase First.md
+|   |       ADR-002 Flutter.md
+|   |       ADR-003 AI Gateway.md
+|   |       ADR-004 Firestore.md
+|   |       
+|   +---assets
+|   |   +---api
+|   |   +---branding
+|   |   +---database
+|   |   +---diagrams
+|   |   |   +---architecture
+|   |   |   +---database
+|   |   |   +---deployment
+|   |   |   +---erd
+|   |   |   +---flow
+|   |   |   \---sequence
+|   |   +---images
+|   |   +---ui
+|   |   \---wireframes
+|   +---meeting-notes
+|   |       2026-07-08 Kickoff.md
+|   |       2026-07-10 AI.md
+|   |       2026-07-15 Firebase.md
+|   |       
+|   \---templates
+|           ADR Template.md
+|           API Template.md
+|           Bug.md
+|           Document Template.md
+|           Epic.md
+|           Feature Template.md
+|           Meeting.md
+|           
++---firebase
++---functions
++---landing
++---mobile
++---scripts
++---tools
+\---web
