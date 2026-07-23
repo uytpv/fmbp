@@ -2,6 +2,7 @@ library fmbp_models;
 
 export 'src/user.dart';
 export 'src/family_group.dart';
+export 'src/fixed_expense.dart';
 export 'src/budget_period.dart';
 export 'src/food_transaction.dart';
 export 'src/ingredient.dart';
@@ -13,3 +14,4 @@ export 'src/pantry_item.dart';
 export 'src/pantry_batch.dart';
 export 'src/shopping_list.dart';
 export 'src/shopping_list_item.dart';
+export 'src/family_member.dart';

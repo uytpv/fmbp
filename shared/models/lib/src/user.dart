@@ -8,9 +8,9 @@ abstract class User with _$User {
   const factory User({
     required String id,
     String? familyId,
-    required String email,
-    required String displayName,
-    required String role,
+    @Default('') String email,
+    @Default('') String displayName,
+    @Default('MEMBER') String role,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

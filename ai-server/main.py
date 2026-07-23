@@ -5,14 +5,14 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import httpx
-from dotenv import load_data
+from dotenv import load_dotenv
 
 # Thiết lập logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("fmbp-ai-gateway")
 
 # Tải cấu hình
-load_data()
+load_dotenv()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "glm4")
 
@@ -25,33 +25,33 @@ app = FastAPI(
 # ----------------- PYDANTIC MODELS -----------------
 
 class IngredientItem(BaseModel):
-    name: String = Field(..., description="Tên nguyên liệu")
+    name: str = Field(..., description="Tên nguyên liệu")
     quantity: float = Field(..., description="Số lượng")
-    unit: String = Field(..., description="Đơn vị")
+    unit: str = Field(..., description="Đơn vị")
 
 class PantryItemModel(BaseModel):
-    name: String
+    name: str
     quantity: float
-    unit: String
+    unit: str
 
 class SuggestMenuRequest(BaseModel):
     weekly_budget: int = Field(..., description="Hạn mức ngân sách tuần (VNĐ)")
     pantry_items: List[PantryItemModel] = Field(default=[], description="Danh sách nguyên liệu hiện có trong tủ lạnh")
 
 class MealPlanSuggestion(BaseModel):
-    day: String = Field(..., description="Ngày trong tuần (Thứ Hai, Thứ Ba...)")
-    meal_type: String = Field(..., description="Sáng, Trưa, Tối")
-    recipe_title: String = Field(..., description="Tên món ăn gợi ý")
+    day: str = Field(..., description="Ngày trong tuần (Thứ Hai, Thứ Ba...)")
+    meal_type: str = Field(..., description="Sáng, Trưa, Tối")
+    recipe_title: str = Field(..., description="Tên món ăn gợi ý")
     estimated_cost: int = Field(..., description="Chi phí ước tính (VNĐ)")
-    reason: String = Field(..., description="Lý do gợi ý (tận dụng tủ lạnh/tiết kiệm chi phí)")
+    reason: str = Field(..., description="Lý do gợi ý (tận dụng tủ lạnh/tiết kiệm chi phí)")
 
 class SuggestMenuResponse(BaseModel):
     menu: List[MealPlanSuggestion]
     total_estimated_cost: int
-    advice: String = Field(..., description="Lời khuyên chi tiêu tuần từ trợ lý AI")
+    advice: str = Field(..., description="Lời khuyên chi tiêu tuần từ trợ lý AI")
 
 class EstimateCostRequest(BaseModel):
-    recipe_title: String
+    recipe_title: str
     ingredients: List[IngredientItem]
 
 class EstimateCostResponse(BaseModel):
@@ -59,11 +59,11 @@ class EstimateCostResponse(BaseModel):
     breakdown: List[dict] = Field(default=[], description="Chi tiết giá từng nguyên liệu")
 
 class ParseRecipeRequest(BaseModel):
-    url_or_text: String = Field(..., description="Đường dẫn công thức hoặc nội dung văn bản thô")
+    url_or_text: str = Field(..., description="Đường dẫn công thức hoặc nội dung văn bản thô")
 
 class ParseRecipeResponse(BaseModel):
-    title: String
-    instructions: List[String]
+    title: str
+    instructions: List[str]
     servings: int
     prep_time: int  # Phút
     cook_time: int  # Phút
@@ -71,7 +71,7 @@ class ParseRecipeResponse(BaseModel):
 
 # ----------------- UTILITY FUNCTIONS -----------------
 
-async def call_ollama(prompt: String, system_prompt: Optional[String] = None) -> String:
+async def call_ollama(prompt: str, system_prompt: Optional[str] = None) -> str:
     """Gọi mô hình AI Ollama chạy cục bộ"""
     url = f"{OLLAMA_URL}/api/generate"
     

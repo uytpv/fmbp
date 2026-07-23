@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fmbp_models/fmbp_models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../config/app_config.dart';
 
 part 'ai_gateway_service.g.dart';
 
@@ -17,12 +17,7 @@ class AIGatewayService {
         ));
 
   static String _getDefaultBaseUrl() {
-    if (kIsWeb) return 'http://localhost:8000';
-    if (Platform.isAndroid) {
-      // 10.0.2.2 đại diện cho localhost của máy host từ Android Emulator
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
+    return 'http://${AppConfig.localHost}:8000';
   }
 
   /// Gợi ý thực đơn dựa trên ngân sách tuần và nguyên liệu trong tủ lạnh
@@ -32,7 +27,7 @@ class AIGatewayService {
   }) async {
     try {
       final itemsJson = pantryItems
-          .map((item) => {
+          .map((item) => <String, dynamic>{
                 'name': item.ingredientId, // Tạm thời dùng ID nguyên liệu làm tên
                 'quantity': item.quantity,
                 'unit': item.unit,
@@ -60,7 +55,7 @@ class AIGatewayService {
   }) async {
     try {
       final itemsJson = ingredients
-          .map((ing) => {
+          .map((ing) => <String, dynamic>{
                 'name': ing.ingredientId,
                 'quantity': ing.quantity,
                 'unit': ing.unit,

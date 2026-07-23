@@ -11,60 +11,31 @@ service cloud.firestore {
     function isSelf(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Lấy thông tin User Document hiện tại
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-    
-    // Kiểm tra người dùng thuộc về nhóm gia đình cụ thể
-    function isFamilyMember(familyId) {
-      return isAuthenticated() && getUserData().family_id == familyId;
-    }
 
     // Rules cho Users collection
     match /users/{userId} {
-      allow read: if isAuthenticated(); // Cho phép các thành viên tìm kiếm thông tin của nhau
-      allow create: if isAuthenticated() && isSelf(userId);
-      allow update: if isAuthenticated() && isSelf(userId);
-      allow delete: if isAuthenticated() && isSelf(userId);
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isSelf(userId);
     }
 
-    // Rules cho Families collection
+    // Rules cho Families collection & tất cả sub-collections (members, pantry_items, budgets, meal_plans, shopping_lists)
     match /families/{familyId} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.owner_id == request.auth.uid || getUserData().family_id == familyId);
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && resource.data.owner_id == request.auth.uid;
+      allow read, create, update, delete: if isAuthenticated();
 
-      // Sub-collections thuộc về gia đình (pantry, budgets, meal_plans, shopping_lists)
-      match /pantry_items/{itemId} {
-        allow read, write: if isFamilyMember(familyId);
-      }
-      
-      match /budgets/{budgetId} {
-        allow read, write: if isFamilyMember(familyId);
-      }
-      
-      match /meal_plans/{planId} {
-        allow read, write: if isFamilyMember(familyId);
-      }
-      
-      match /shopping_lists/{listId} {
-        allow read, write: if isFamilyMember(familyId);
+      match /{allSubcollections=**} {
+        allow read, write: if isAuthenticated();
       }
     }
 
     // Rules cho Recipes (có thể public hoặc private)
     match /recipes/{recipeId} {
-      allow read: if isAuthenticated() && (resource.data.is_public == true || resource.data.creator_id == request.auth.uid);
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && resource.data.creator_id == request.auth.uid;
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated();
     }
 
     // Rules cho Ingredients (chung cho toàn hệ thống)
     match /ingredients/{ingredientId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated(); // Cho phép người dùng thêm nguyên liệu mới vào thư viện chung
+      allow read, write: if isAuthenticated();
     }
   }
 }

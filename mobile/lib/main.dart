@@ -6,20 +6,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/config/app_config.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Khởi tạo Firebase
-  await Firebase.initializeApp();
+  // Khởi tạo Firebase với cấu hình Emulator/Demo
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Firebase initialization notice: $e');
+  }
 
-  // Cấu hình các cổng kết nối cục bộ Firebase Emulator trong chế độ Debug
+  // Cấu hình kết nối Firebase Emulator trong chế độ Debug
   if (kDebugMode) {
-    final host = defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : 'localhost';
+    final host = AppConfig.localHost;
     try {
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-      print('Firebase Emulators connected on $host');
+      print('Firebase Emulators connected on $host (Auth: 9099, Firestore: 8080)');
     } catch (e) {
       print('Error connecting to Firebase Emulators: $e');
     }
@@ -40,7 +48,7 @@ class FMBPApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Family Meal Budget Planner',
+      title: 'MealSave - Family Meal Budget Planner',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system, // Đồng bộ với Theme hệ điều hành

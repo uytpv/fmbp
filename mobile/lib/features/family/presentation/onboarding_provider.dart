@@ -17,6 +17,9 @@ class OnboardingStateNotifier extends _$OnboardingStateNotifier {
   Future<void> setupFamilyAndBudget({
     required String familyName,
     required int weeklyBudgetAmount,
+    String currency = 'VND',
+    double? monthlyIncome,
+    List<FixedExpense> fixedExpenses = const [],
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -27,12 +30,17 @@ class OnboardingStateNotifier extends _$OnboardingStateNotifier {
 
       final firestore = ref.read(firestoreServiceProvider);
 
-      // 1. Tạo nhóm gia đình mới (đồng thời cập nhật user.family_id và role sang OWNER)
-      final familyId = await firestore.createFamilyGroup(familyName, user.uid);
+      // 1. Tạo nhóm gia đình mới (đồng thời lưu currency, monthlyIncome, fixedExpenses)
+      final familyId = await firestore.createFamilyGroup(
+        familyName,
+        user.uid,
+        currency: currency,
+        monthlyIncome: monthlyIncome,
+        fixedExpenses: fixedExpenses,
+      );
 
       // 2. Thiết lập ngân sách tuần đầu tiên
       final now = DateTime.now();
-      // Tìm ngày thứ hai đầu tuần và ngày chủ nhật cuối tuần
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final startOfWeek = DateTime(monday.year, monday.month, monday.day);
       final endOfWeek = startOfWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));

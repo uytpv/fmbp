@@ -132,6 +132,21 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: AppColors.primary.withOpacity(0.18),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primary);
+          }
+          return const IconThemeData(color: AppColors.textSecondaryLight);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12);
+          }
+          return const TextStyle(color: AppColors.textSecondaryLight, fontSize: 12);
+        }),
+      ),
     );
   }
 
@@ -197,6 +212,21 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: AppColors.primary.withOpacity(0.25),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primary);
+          }
+          return const IconThemeData(color: AppColors.textSecondaryDark);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12);
+          }
+          return const TextStyle(color: AppColors.textSecondaryDark, fontSize: 12);
+        }),
       ),
     );
   }

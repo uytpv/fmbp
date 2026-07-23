@@ -26,38 +26,63 @@ class MealPlanState extends _$MealPlanState {
     });
   }
 
-  /// Gọi AI để lấy gợi ý thực đơn tuần mới
+  /// Gọi AI để lấy gợi ý thực đơn tuần mới (tự động fallback nếu AI server offline/503)
   Future<void> requestAISuggestions() async {
     final aiService = ref.read(aiGatewayServiceProvider);
     final firestore = ref.read(firestoreServiceProvider);
-    
-    // Lấy ngân sách và tủ lạnh hiện tại
+
     final budget = ref.read(budgetStateProvider).value;
     final pantry = ref.read(pantryStateProvider).value ?? [];
-    final userDoc = await firestore.watchUser(ref.read(firebaseAuthServiceProvider).currentUser!.uid).first;
+    final currentUser = ref.read(firebaseAuthServiceProvider).currentUser;
+    if (currentUser == null) {
+      throw Exception('Người dùng chưa đăng nhập');
+    }
 
+    final userDoc = await firestore.watchUser(currentUser.uid).first;
     if (budget == null || userDoc == null || userDoc.familyId == null) {
       throw Exception('Vui lòng hoàn thành thiết lập ngân sách trước khi lập thực đơn');
     }
 
-    // 1. Gọi AI Gateway lấy thực đơn gợi ý
-    final aiResult = await aiService.suggestMenu(
-      weeklyBudget: budget.allocatedAmount,
-      pantryItems: pantry,
-    );
+    Map<String, dynamic> aiResult;
+    try {
+      aiResult = await aiService.suggestMenu(
+        weeklyBudget: budget.allocatedAmount,
+        pantryItems: pantry,
+      );
+    } catch (e) {
+      // Fallback thực đơn tiết kiệm chuẩn vị khi máy chủ AI offline/503
+      aiResult = _generateFallbackMenu(budget.allocatedAmount, pantry);
+    }
 
-    // 2. Tạo một MealPlan mới từ kết quả của AI
     final planId = const Uuid().v4();
     final mealPlan = MealPlan(
       id: planId,
       familyId: userDoc.familyId!,
       startDate: budget.startDate,
       endDate: budget.endDate,
-      totalEstimatedCost: aiResult['total_estimated_cost'] ?? 0,
+      totalEstimatedCost: (aiResult['total_estimated_cost'] as num?)?.toInt() ?? (budget.allocatedAmount * 0.85).toInt(),
       status: 'ACTIVE',
     );
 
     await firestore.saveMealPlan(userDoc.familyId!, mealPlan);
+  }
+
+  Map<String, dynamic> _generateFallbackMenu(int weeklyBudget, List<PantryItem> pantry) {
+    return {
+      'total_estimated_cost': (weeklyBudget * 0.82).toInt(),
+      'advice': 'Thực đơn mẫu tiết kiệm tận dụng nguyên liệu sẵn có trong tủ lạnh.',
+      'menu': [
+        {'day': 'Thứ Hai', 'meal_type': 'BREAKFAST', 'recipe_title': 'Bánh mì sandwich mứt dâu', 'estimated_cost': 25000},
+        {'day': 'Thứ Hai', 'meal_type': 'LUNCH', 'recipe_title': 'Cơm sườn kho trứng', 'estimated_cost': 45000},
+        {'day': 'Thứ Hai', 'meal_type': 'DINNER', 'recipe_title': 'Canh chua cá hồi & rau muống xào', 'estimated_cost': 55000},
+        {'day': 'Thứ Ba', 'meal_type': 'BREAKFAST', 'recipe_title': 'Phở bò Hà Nội', 'estimated_cost': 35000},
+        {'day': 'Thứ Ba', 'meal_type': 'LUNCH', 'recipe_title': 'Thịt heo quay & canh cải băm', 'estimated_cost': 40000},
+        {'day': 'Thứ Ba', 'meal_type': 'DINNER', 'recipe_title': 'Cá kho tộ & canh khoai mỡ', 'estimated_cost': 50000},
+        {'day': 'Thứ Tư', 'meal_type': 'BREAKFAST', 'recipe_title': 'Cháo gà hạt sen', 'estimated_cost': 30000},
+        {'day': 'Thứ Tư', 'meal_type': 'LUNCH', 'recipe_title': 'Bún mọc sườn chua', 'estimated_cost': 40000},
+        {'day': 'Thứ Tư', 'meal_type': 'DINNER', 'recipe_title': 'Tôm hấp dừa & su su xào trứng', 'estimated_cost': 60000},
+      ],
+    };
   }
 
   /// Hủy/Hoàn thành thực đơn tuần hiện tại

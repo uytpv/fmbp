@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/persistent_financial_header.dart';
 import 'shopping_provider.dart';
 
 class ShoppingListScreen extends ConsumerStatefulWidget {
@@ -60,7 +61,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đã hoàn thành đi chợ! Các nguyên liệu đã được nhập kho tủ lạnh.'),
+            content: Text('Đã hoàn thành đi chợ và tự động nhập nguyên liệu vào Tủ Lạnh!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -90,126 +91,110 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       appBar: AppBar(
         title: const Text('Danh Sách Đi Chợ'),
       ),
-      body: shoppingListState.when(
-        data: (list) {
-          if (list == null) {
-            // Empty State
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_basket_outlined,
-                      size: 64,
-                      color: theme.disabledColor,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Không có danh sách đi chợ hoạt động',
-                      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tạo danh sách đi chợ tự động dựa trên thực đơn tuần hoạt động của gia đình bạn.',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.brightness == Brightness.dark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    AppButton(
-                      text: 'Tạo Danh Sách Đi Chợ',
-                      isLoading: _isGenerating,
-                      onPressed: _generateList,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Active Shopping List UI
-          return Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  children: [
-                    // Info Header Card
-                    AppCard(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
+      body: Column(
+        children: [
+          const PersistentFinancialHeader(),
+          Expanded(
+            child: shoppingListState.when(
+              data: (list) {
+                if (list == null) {
+                  // Empty State
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.info_outline, color: AppColors.primary),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Đồng bộ thời gian thực: Các thành viên khác có thể thấy những gì bạn nhặt vào giỏ.',
-                              style: theme.textTheme.bodyMedium,
-                            ),
+                          Icon(
+                            Icons.shopping_basket_outlined,
+                            size: 64,
+                            color: theme.disabledColor,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Chưa có danh sách đi chợ tuần này',
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Hãy sinh danh sách đi chợ tự động dựa trên thực đơn tuần của bạn.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.disabledColor),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppButton(
+                            text: 'Tạo Danh Sách Đi Chợ',
+                            icon: Icons.auto_awesome,
+                            isLoading: _isGenerating,
+                            onPressed: _generateList,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                  );
+                }
 
-                    Text(
-                      'Các mặt hàng cần mua',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // Display mock items list
-                    ..._mockItems.map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: AppCard(
-                          child: CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              item['name'],
-                              style: TextStyle(
-                                decoration: item['checked'] ? TextDecoration.lineThrough : null,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text('Quầy: ${item['aisle']}'),
-                            secondary: Text(
-                              item['qty'],
-                              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                            ),
-                            value: item['checked'],
-                            onChanged: (val) {
-                              setState(() {
-                                item['checked'] = val ?? false;
-                              });
-                            },
+                // Display Active Shopping List
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        children: [
+                          Text(
+                            'Nguyên liệu cần mua tuần này',
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
+                          const SizedBox(height: AppSpacing.sm),
+                          ..._mockItems.map((item) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: AppCard(
+                                padding: EdgeInsets.zero,
+                                child: CheckboxListTile(
+                                  title: Text(
+                                    item['name'],
+                                    style: TextStyle(
+                                      decoration: item['checked'] ? TextDecoration.lineThrough : null,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text('Quầy: ${item['aisle']}'),
+                                  secondary: Text(
+                                    item['qty'],
+                                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                  ),
+                                  value: item['checked'],
+                                  onChanged: (val) {
+                                    setState(() {
+                                      item['checked'] = val ?? false;
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
 
-              // Bottom Button Container
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: AppButton(
-                  text: 'Hoàn Thành Đi Chợ',
-                  isLoading: _isCompleting,
-                  onPressed: _completeList,
-                ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text('Lỗi tải danh sách đi chợ: $err')),
+                    // Bottom Button Container
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: AppButton(
+                        text: 'Hoàn Thành Đi Chợ',
+                        isLoading: _isCompleting,
+                        onPressed: _completeList,
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, st) => Center(child: Text('Lỗi tải danh sách đi chợ: $err')),
+            ),
+          ),
+        ],
       ),
     );
   }

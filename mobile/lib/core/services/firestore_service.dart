@@ -12,37 +12,73 @@ class FirestoreService {
   Stream<User?> watchUser(String userId) {
     return _db.collection('users').doc(userId).snapshots().map((snap) {
       if (!snap.exists) return null;
-      return User.fromJson({...snap.data()!, 'id': snap.id});
+      final data = snap.data()!;
+      final familyId = data['familyId'] as String? ?? data['family_id'] as String?;
+      final email = data['email'] as String? ?? '';
+      final displayName = data['displayName'] as String? ?? data['display_name'] as String? ?? '';
+      final role = data['role'] as String? ?? 'MEMBER';
+
+      return User(
+        id: snap.id,
+        familyId: familyId,
+        email: email,
+        displayName: displayName,
+        role: role,
+      );
     });
   }
 
+  /// Đảm bảo User Document luôn tồn tại trong Firestore (tạo mới nếu chưa có, hoặc merge nếu đã có)
+  Future<void> ensureUserDocument(String userId, String email, {String? displayName}) async {
+    final userRef = _db.collection('users').doc(userId);
+    await userRef.set({
+      'id': userId,
+      'email': email,
+      'display_name': displayName ?? (email.isNotEmpty ? email.split('@')[0] : 'User'),
+      'role': 'MEMBER',
+      'created_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> updateUserFamily(String userId, String? familyId, String role) async {
-    await _db.collection('users').doc(userId).update({
+    await _db.collection('users').doc(userId).set({
+      'id': userId,
       'family_id': familyId,
       'role': role,
-    });
+    }, SetOptions(merge: true));
   }
 
   // ----------------- FAMILY OPERATIONS -----------------
 
-  Future<String> createFamilyGroup(String name, String ownerId) async {
+  Future<String> createFamilyGroup(
+    String name,
+    String ownerId, {
+    String currency = 'VND',
+    double? monthlyIncome,
+    List<FixedExpense> fixedExpenses = const [],
+  }) async {
     final familyRef = _db.collection('families').doc();
     final familyId = familyRef.id;
 
-    final family = FamilyGroup(
-      id: familyId,
-      name: name,
-      ownerId: ownerId,
-      createdAt: DateTime.now(),
-    );
+    final familyMap = {
+      'id': familyId,
+      'name': name,
+      'ownerId': ownerId,
+      'createdAt': DateTime.now().toIso8601String(),
+      'currency': currency,
+      'monthlyIncome': monthlyIncome,
+      'fixedExpenses': fixedExpenses.map((e) => e.toJson()).toList(),
+    };
 
     // Run transaction to ensure family is created and user's family_id is updated atomically
+    // Sử dụng set với SetOptions(merge: true) để tránh lỗi "no entity to update" khi user doc chưa từng khởi tạo
     await _db.runTransaction((transaction) async {
-      transaction.set(familyRef, family.toJson());
-      transaction.update(_db.collection('users').doc(ownerId), {
+      transaction.set(familyRef, familyMap);
+      transaction.set(_db.collection('users').doc(ownerId), {
+        'id': ownerId,
         'family_id': familyId,
         'role': 'OWNER',
-      });
+      }, SetOptions(merge: true));
     });
 
     return familyId;
@@ -50,9 +86,45 @@ class FirestoreService {
 
   Stream<FamilyGroup?> watchFamily(String familyId) {
     return _db.collection('families').doc(familyId).snapshots().map((snap) {
-      if (!snap.exists) return null;
+      if (!snap.exists || snap.data() == null) return null;
       return FamilyGroup.fromJson({...snap.data()!, 'id': snap.id});
     });
+  }
+
+  // ----------------- FAMILY MEMBER OPERATIONS -----------------
+
+  Stream<List<FamilyMember>> watchFamilyMembers(String familyId) {
+    if (familyId.isEmpty || familyId == 'null') {
+      return Stream.value([]);
+    }
+    return _db
+        .collection('families')
+        .doc(familyId)
+        .collection('members')
+        .snapshots()
+        .map((snap) {
+      return snap.docs
+          .map((doc) => FamilyMember.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
+    });
+  }
+
+  Future<void> saveFamilyMember(String familyId, FamilyMember member) async {
+    await _db
+        .collection('families')
+        .doc(familyId)
+        .collection('members')
+        .doc(member.id)
+        .set(member.toJson());
+  }
+
+  Future<void> deleteFamilyMember(String familyId, String memberId) async {
+    await _db
+        .collection('families')
+        .doc(familyId)
+        .collection('members')
+        .doc(memberId)
+        .delete();
   }
 
   // ----------------- BUDGET OPERATIONS -----------------
@@ -62,7 +134,7 @@ class FirestoreService {
         .collection('families')
         .doc(familyId)
         .collection('budgets')
-        .orderBy('start_date', descending: true)
+        .orderBy('startDate', descending: true)
         .limit(1)
         .snapshots()
         .map((snap) {
@@ -97,9 +169,9 @@ class FirestoreService {
     await _db.runTransaction((transaction) async {
       transaction.set(txRef, tx.toJson());
       // Increment spentAmount in current BudgetPeriod
-      transaction.update(budgetRef, {
-        'spent_amount': FieldValue.increment(tx.amount),
-      });
+      transaction.set(budgetRef, {
+        'spentAmount': FieldValue.increment(tx.amount),
+      }, SetOptions(merge: true));
     });
   }
 
@@ -108,7 +180,7 @@ class FirestoreService {
   Stream<List<Recipe>> watchRecipes({bool includePublic = true, String? creatorId}) {
     Query query = _db.collection('recipes');
     if (creatorId != null) {
-      query = query.where('creator_id', isEqualTo: creatorId);
+      query = query.where('creatorId', isEqualTo: creatorId);
     }
     return query.snapshots().map((snap) {
       return snap.docs
@@ -195,6 +267,15 @@ class FirestoreService {
         .collection('pantry_items')
         .doc(item.id)
         .set(item.toJson());
+  }
+
+  Future<void> deletePantryItem(String familyId, String itemId) async {
+    await _db
+        .collection('families')
+        .doc(familyId)
+        .collection('pantry_items')
+        .doc(itemId)
+        .delete();
   }
 }
 
