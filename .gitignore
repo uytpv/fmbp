@@ -54,6 +54,8 @@ database-debug.log
 firebase/.firebase/
 firebase/firestore-debug.log
 firebase/firebase-debug.log
+firebase/emulator-data/
+emulator-data/
 
 # ------------------------------------------------------------------------------
 # Dart & Flutter (mobile/ and shared packages)

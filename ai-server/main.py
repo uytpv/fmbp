@@ -15,6 +15,7 @@ logger = logging.getLogger("fmbp-ai-gateway")
 load_dotenv()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "glm4")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 app = FastAPI(
     title="FMBP AI Gateway",
@@ -71,6 +72,48 @@ class ParseRecipeResponse(BaseModel):
 
 # ----------------- UTILITY FUNCTIONS -----------------
 
+async def call_gemini_flash(prompt: str, system_prompt: Optional[str] = None) -> Optional[str]:
+    """Gọi mô hình AI Gemini 1.5 Flash API siêu tốc với JSON output mode"""
+    if not GEMINI_API_KEY:
+        return None
+        
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": prompt}]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+    
+    if system_prompt:
+        payload["systemInstruction"] = {
+            "parts": [{"text": system_prompt}]
+        }
+        
+    logger.info("Đang gửi yêu cầu siêu tốc đến Gemini 1.5 Flash API...")
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                result = response.json()
+                candidates = result.get("candidates", [])
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "")
+            else:
+                logger.warning(f"Gemini API báo lỗi status {response.status_code}: {response.text}")
+    except Exception as e:
+        logger.warning(f"Không thể kết nối Gemini API ({str(e)}), chuyển sang Ollama/Rule fallback...")
+        
+    return None
+
 async def call_ollama(prompt: str, system_prompt: Optional[str] = None) -> str:
     """Gọi mô hình AI Ollama chạy cục bộ"""
     url = f"{OLLAMA_URL}/api/generate"
@@ -86,17 +129,29 @@ async def call_ollama(prompt: str, system_prompt: Optional[str] = None) -> str:
         
     logger.info(f"Đang gửi yêu cầu đến Ollama ({OLLAMA_MODEL})...")
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
-            if response.status_code != 200:
-                logger.error(f"Lỗi phản hồi từ Ollama: {response.text}")
-                raise HTTPException(status_code=502, detail="Lỗi kết nối dịch vụ AI Ollama")
-            
-            result = response.json()
-            return result.get("response", "")
-    except httpx.RequestError as e:
-        logger.error(f"Không thể kết nối đến Ollama tại {OLLAMA_URL}: {str(e)}")
-        raise HTTPException(status_code=503, detail="Không tìm thấy dịch vụ Ollama cục bộ. Hãy chắc chắn Ollama đang chạy.")
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("response", "")
+    except Exception as e:
+        logger.warning(f"Không thể kết nối Ollama tại {OLLAMA_URL}: {str(e)}")
+        
+    return ""
+
+async def call_ai_engine(prompt: str, system_prompt: Optional[str] = None) -> str:
+    """Điều phối gọi AI: Gemini 1.5 Flash (Ưu tiên) -> Ollama GLM-4 -> Fallback"""
+    # 1. Thử gọi Gemini Flash API (Siêu tốc <0.8s)
+    gemini_res = await call_gemini_flash(prompt, system_prompt)
+    if gemini_res:
+        return gemini_res
+
+    # 2. Thử gọi Ollama Local
+    ollama_res = await call_ollama(prompt, system_prompt)
+    if ollama_res:
+        return ollama_res
+
+    return ""
 
 # ----------------- API ENDPOINTS -----------------
 
@@ -133,7 +188,7 @@ async def suggest_menu(request: SuggestMenuRequest):
         "Hãy tính toán ước lượng chi phí hợp lý bằng tiền VNĐ. Đảm bảo tổng chi phí ước tính nhỏ hơn hoặc bằng ngân sách tuần."
     )
     
-    response_text = await call_ollama(prompt, system_prompt)
+    response_text = await call_ai_engine(prompt, system_prompt)
     
     # Bóc tách JSON từ phản hồi của LLM
     try:
@@ -171,7 +226,7 @@ async def estimate_cost(request: EstimateCostRequest):
     ing_str = "\n".join([f"- {item.name}: {item.quantity} {item.unit}" for item in request.ingredients])
     prompt = f"Món ăn: {request.recipe_title}\nNguyên liệu:\n{ing_str}"
     
-    response_text = await call_ollama(prompt, system_prompt)
+    response_text = await call_ai_engine(prompt, system_prompt)
     
     try:
         start_idx = response_text.find('{')
@@ -203,7 +258,7 @@ async def parse_recipe(request: ParseRecipeRequest):
         "}"
     )
     
-    response_text = await call_ollama(request.url_or_text, system_prompt)
+    response_text = await call_ai_engine(request.url_or_text, system_prompt)
     
     try:
         start_idx = response_text.find('{')

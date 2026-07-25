@@ -4,11 +4,10 @@ import 'package:uuid/uuid.dart';
 import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../meal_plan/presentation/meal_plan_provider.dart';
-import '../../pantry/presentation/pantry_provider.dart';
 
 part 'shopping_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ShoppingState extends _$ShoppingState {
   @override
   Stream<ShoppingList?> build() {
@@ -32,19 +31,15 @@ class ShoppingState extends _$ShoppingState {
 
     if (user == null) return;
 
-    final userDoc = await firestore.watchUser(user.uid).first;
+    final userDoc = await firestore.getUser(user.uid);
     if (userDoc == null || userDoc.familyId == null) return;
 
     final mealPlan = ref.read(mealPlanStateProvider).value;
-    final pantryItems = ref.read(pantryStateProvider).value ?? [];
 
     if (mealPlan == null) {
       throw Exception('Chưa có thực đơn tuần hoạt động để sinh danh sách đi chợ');
     }
 
-    // Ở bản MVP, ta mô phỏng thuật toán lấy nguyên liệu cần mua.
-    // Thực tế sẽ duyệt qua các công thức trong Meal Plan, cộng gộp nguyên liệu cần thiết,
-    // sau đó trừ đi số lượng sẵn có trong Pantry.
     final listId = const Uuid().v4();
     final shoppingList = ShoppingList(
       id: listId,

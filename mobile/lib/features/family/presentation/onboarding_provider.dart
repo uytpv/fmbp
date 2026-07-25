@@ -14,7 +14,7 @@ class OnboardingStateNotifier extends _$OnboardingStateNotifier {
     return const AsyncValue.data(null);
   }
 
-  Future<void> setupFamilyAndBudget({
+  Future<String> setupFamilyAndBudget({
     required String familyName,
     required int weeklyBudgetAmount,
     String currency = 'VND',
@@ -57,8 +57,17 @@ class OnboardingStateNotifier extends _$OnboardingStateNotifier {
 
       await firestore.setBudget(familyId, firstBudget);
       state = const AsyncValue.data(null);
+      return familyId;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 }
+
+final familyMembersStreamProvider = StreamProvider.family<List<FamilyMember>, String>((ref, familyId) {
+  if (familyId.isEmpty || familyId == 'null') {
+    return Stream.value([]);
+  }
+  return ref.watch(firestoreServiceProvider).watchFamilyMembers(familyId);
+});

@@ -222,10 +222,20 @@ class _BudgetTrackingScreenState extends ConsumerState<BudgetTrackingScreen> {
                     'Lịch Sử Chi Tiêu',
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  TextButton.icon(
-                    onPressed: _showAddTransactionBottomSheet,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Thêm chi tiêu'),
+                  InkWell(
+                    onTap: _showAddTransactionBottomSheet,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.add, size: 18, color: AppColors.primary),
+                          SizedBox(width: 4),
+                          Text('Thêm chi tiêu', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

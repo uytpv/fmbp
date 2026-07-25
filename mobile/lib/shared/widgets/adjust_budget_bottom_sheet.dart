@@ -328,10 +328,9 @@ class _AdjustBudgetBottomSheetState extends ConsumerState<AdjustBudgetBottomShee
       final familyId = widget.family!.id;
       final newWeeklyBudget = _finalWeeklyBudgetInt;
 
-      // 1. Cập nhật Family Info (currency, income, fixed expenses)
-      await firestore.createFamilyGroup(
-        widget.family!.name,
-        user.uid,
+      // 1. Cập nhật Family Info (currency, income, fixed expenses) mà KHÔNG tạo ID mới
+      await firestore.updateFamilyGroup(
+        familyId,
         currency: _selectedCurrency,
         monthlyIncome: _selectedMode == AdjustBudgetMode.fixedExpenses ? _totalIncome : null,
         fixedExpenses: _selectedMode == AdjustBudgetMode.fixedExpenses ? _fixedExpenses : const [],
@@ -555,10 +554,20 @@ class _AdjustBudgetBottomSheetState extends ConsumerState<AdjustBudgetBottomShee
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Các khoản chi cố định:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextButton.icon(
-                      onPressed: _addExpenseDialog,
-                      icon: const Icon(Icons.add_circle_outline, size: 16),
-                      label: const Text('Thêm khoản'),
+                    InkWell(
+                      onTap: _addExpenseDialog,
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.add_circle_outline, size: 16, color: AppColors.primary),
+                            SizedBox(width: 4),
+                            Text('Thêm khoản', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),

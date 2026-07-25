@@ -26,8 +26,11 @@ class MealPlanState extends _$MealPlanState {
     });
   }
 
-  /// Gọi AI để lấy gợi ý thực đơn tuần mới (tự động fallback nếu AI server offline/503)
-  Future<void> requestAISuggestions() async {
+  /// Gọi AI để lấy gợi ý thực đơn tuần mới theo tiêu chí lựa chọn
+  Future<void> requestAISuggestions({
+    String complexity = 'BALANCED',
+    List<String> cuisines = const ['VIETNAMESE'],
+  }) async {
     final aiService = ref.read(aiGatewayServiceProvider);
     final firestore = ref.read(firestoreServiceProvider);
 
@@ -51,7 +54,7 @@ class MealPlanState extends _$MealPlanState {
       );
     } catch (e) {
       // Fallback thực đơn tiết kiệm chuẩn vị khi máy chủ AI offline/503
-      aiResult = _generateFallbackMenu(budget.allocatedAmount, pantry);
+      aiResult = _generateFallbackMenu(budget.allocatedAmount, pantry, complexity: complexity);
     }
 
     final planId = const Uuid().v4();
@@ -67,7 +70,7 @@ class MealPlanState extends _$MealPlanState {
     await firestore.saveMealPlan(userDoc.familyId!, mealPlan);
   }
 
-  Map<String, dynamic> _generateFallbackMenu(int weeklyBudget, List<PantryItem> pantry) {
+  Map<String, dynamic> _generateFallbackMenu(int weeklyBudget, List<PantryItem> pantry, {String complexity = 'BALANCED'}) {
     return {
       'total_estimated_cost': (weeklyBudget * 0.82).toInt(),
       'advice': 'Thực đơn mẫu tiết kiệm tận dụng nguyên liệu sẵn có trong tủ lạnh.',

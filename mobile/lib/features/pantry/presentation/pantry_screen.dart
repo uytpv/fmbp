@@ -303,14 +303,29 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final hasItems = pantryState.maybeWhen(
+      data: (items) => items.isNotEmpty,
+      orElse: () => false,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kho Tủ Lạnh Gia Đình'),
         actions: [
-          TextButton.icon(
-            onPressed: _navigateToMealPlan,
-            icon: const Icon(Icons.restaurant_menu_rounded, size: 18, color: AppColors.primary),
-            label: const Text('Lên Món', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+          InkWell(
+            onTap: _navigateToMealPlan,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.restaurant_menu_rounded, size: 18, color: AppColors.primary),
+                  SizedBox(width: 4),
+                  Text('Lên Món', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                ],
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline_rounded),
@@ -380,22 +395,48 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 12,
+                            runSpacing: 12,
                             children: [
-                              ElevatedButton.icon(
-                                onPressed: _addPantryItemDialog,
-                                icon: const Icon(Icons.add),
-                                label: const Text('Thêm Đồ Vào Tủ'),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                onPressed: _navigateToMealPlan,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
+                              InkWell(
+                                onTap: _addPantryItemDialog,
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.add, size: 18, color: Colors.white),
+                                      SizedBox(width: 6),
+                                      Text('Thêm Đồ Vào Tủ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
                                 ),
-                                icon: const Icon(Icons.restaurant_menu_rounded),
-                                label: const Text('Lên Món Ngay'),
+                              ),
+                              InkWell(
+                                onTap: _navigateToMealPlan,
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange,
+                                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.restaurant_menu_rounded, size: 18, color: Colors.white),
+                                      SizedBox(width: 6),
+                                      Text('Lên Món Ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -536,34 +577,36 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: Row(
-          children: [
-            Expanded(
-              child: FloatingActionButton.extended(
-                heroTag: 'cook_now_fab',
-                onPressed: _navigateToMealPlan,
-                icon: const Icon(Icons.restaurant_menu_rounded),
-                label: const Text('🍲 Nấu Món Gì Đây?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
+      floatingActionButton: hasItems
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FloatingActionButton.extended(
+                      heroTag: 'cook_now_fab',
+                      onPressed: _navigateToMealPlan,
+                      icon: const Icon(Icons.restaurant_menu_rounded),
+                      label: const Text('🍲 Nấu Món Gì Đây?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: FloatingActionButton.extended(
+                      heroTag: 'add_pantry_fab',
+                      onPressed: _addPantryItemDialog,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Thêm Đồ Vào Tủ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: FloatingActionButton.extended(
-                heroTag: 'add_pantry_fab',
-                onPressed: _addPantryItemDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Thêm Đồ Vào Tủ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 }

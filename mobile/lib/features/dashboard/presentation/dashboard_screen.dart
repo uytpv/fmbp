@@ -52,10 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: tabs,
-      ),
+      body: tabs[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {

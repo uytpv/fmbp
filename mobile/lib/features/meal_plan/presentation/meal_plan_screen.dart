@@ -25,13 +25,16 @@ class MealPlanScreen extends ConsumerStatefulWidget {
 
 class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
   var _isGenerating = false;
-  String _selectedComplexity = 'ALL'; // ALL, FAST (<30p), BALANCED (30-60p), ELABORATE (>60p)
+  String _selectedComplexity = 'BALANCED'; // FAST (<30p), BALANCED (30-60p), ELABORATE (>60p)
   final Set<String> _selectedCuisines = {'VIETNAMESE', 'FINNISH'};
 
   Future<void> _generateAIPlan() async {
     setState(() => _isGenerating = true);
     try {
-      await ref.read(mealPlanStateProvider.notifier).requestAISuggestions();
+      await ref.read(mealPlanStateProvider.notifier).requestAISuggestions(
+            complexity: _selectedComplexity,
+            cuisines: _selectedCuisines.toList(),
+          );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,7 +107,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
               const Text('Chọn một hoặc nhiều phong cách món ăn yêu thích của gia đình:', style: TextStyle(fontSize: 12)),
               const SizedBox(height: 12),
               _buildCuisineCheckbox('🇻🇳 Món Việt Nam', 'VIETNAMESE', setDialogState),
-              _buildCuisineCheckbox('🇫🇮 Món Phần Lan / Bắc Âu', 'FINNISH', setDialogState),
+              _buildCuisineCheckbox('🇫🇮 Món Bắc Âu (Phần Lan)', 'FINNISH', setDialogState),
               _buildCuisineCheckbox('🇪🇺 Món Châu Âu (Pasta, Steak)', 'EUROPEAN', setDialogState),
               _buildCuisineCheckbox('🇯🇵 Món Châu Á (Nhật, Hàn)', 'ASIAN', setDialogState),
               _buildCuisineCheckbox('🥗 Món Clean / Healthy', 'HEALTHY', setDialogState),
@@ -210,69 +213,101 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                 children: [
                   const PersistentFinancialHeader(),
 
-                  // Bộ Lọc Cấp Độ Nấu Nướng (<30p, 30-60p, >60p)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildComplexityChip('Tất Cả Cấp Độ', 'ALL'),
-                          const SizedBox(width: 6),
-                          _buildComplexityChip('⚡ Nấu Nhanh (<30p)', 'FAST'),
-                          const SizedBox(width: 6),
-                          _buildComplexityChip('🍲 Cân Bằng (30-60p)', 'BALANCED'),
-                          const SizedBox(width: 6),
-                          _buildComplexityChip('👑 Cầu Kỳ (>60p)', 'ELABORATE'),
-                        ],
-                      ),
-                    ),
-                  ),
-
                   Expanded(
                     child: mealPlanState.when(
                       data: (plan) {
                         if (plan == null) {
-                          // Empty state - Prompt AI Generation
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(AppSpacing.md),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.auto_awesome_outlined,
-                                      size: 56,
-                                      color: AppColors.primary,
-                                    ),
+                          // Empty state - Prompt AI Generation with Input Settings
+                          return SingleChildScrollView(
+                            padding: const EdgeInsets.all(AppSpacing.lg),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    shape: BoxShape.circle,
                                   ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  Text(
-                                    'Lập Thực Đơn Tuần Dinh Dưỡng',
-                                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                  child: const Icon(
+                                    Icons.auto_awesome_outlined,
+                                    size: 48,
+                                    color: AppColors.primary,
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Trợ lý AI sẽ gợi ý thực đơn quốc tế tối ưu dựa trên ngân sách tuần và thực phẩm trong tủ lạnh của bạn.',
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                                    ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Text(
+                                  'Lập Thực Đơn Tuần Dinh Dưỡng',
+                                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Trợ lý AI sẽ gợi ý thực đơn dựa trên ngân sách, đồ trong tủ lạnh và tiêu chí cài đặt bên dưới.',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                                   ),
-                                  const SizedBox(height: AppSpacing.xl),
-                                  AppButton(
-                                    text: 'Gợi Ý Thực Đơn Bằng AI',
-                                    isLoading: _isGenerating,
-                                    onPressed: _generateAIPlan,
+                                ),
+                                const SizedBox(height: AppSpacing.lg),
+
+                                // Thẻ Tiêu Chí Đầu Vào Nấu Ăn
+                                AppCard(
+                                  padding: const EdgeInsets.all(AppSpacing.md),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: const [
+                                          Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Cấu Hình Tiêu Chí Nấu Ăn Đầu Vào',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        '1. Chọn cấp độ & thời gian chuẩn bị:',
+                                        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Expanded(child: _buildComplexityOptionTile('⚡ Nấu Nhanh', '<30 phút', 'FAST')),
+                                          const SizedBox(width: 6),
+                                          Expanded(child: _buildComplexityOptionTile('🍲 Cân Bằng', '30-60 phút', 'BALANCED')),
+                                          const SizedBox(width: 6),
+                                          Expanded(child: _buildComplexityOptionTile('👑 Cầu Kỳ', '>60 phút', 'ELABORATE')),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '2. Phong cách ẩm thực:',
+                                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                                          ),
+                                          InkWell(
+                                            onTap: _showCuisinePreferencesDialog,
+                                            child: Text(
+                                              'Tùy chỉnh (${_selectedCuisines.length}) ⚙️',
+                                              style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+
+                                const SizedBox(height: AppSpacing.xl),
+                                AppButton(
+                                  text: 'Gợi Ý Thực Đơn Bằng AI',
+                                  isLoading: _isGenerating,
+                                  onPressed: _generateAIPlan,
+                                ),
+                              ],
                             ),
                           );
                         }
@@ -309,11 +344,22 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                                       ),
                                       Row(
                                         children: [
-                                          TextButton.icon(
-                                            onPressed: _copyPlanToNextWeek,
-                                            icon: const Icon(Icons.copy_rounded, size: 14),
-                                            label: const Text('Sao chép tuần sau', style: TextStyle(fontSize: 11)),
+                                          InkWell(
+                                            onTap: _copyPlanToNextWeek,
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: const [
+                                                  Icon(Icons.copy_rounded, size: 14, color: AppColors.primary),
+                                                  SizedBox(width: 4),
+                                                  Text('Sao chép tuần sau', style: TextStyle(fontSize: 11, color: AppColors.primary)),
+                                                ],
+                                              ),
+                                            ),
                                           ),
+                                          const SizedBox(width: 4),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
@@ -361,10 +407,20 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                                   'Lịch Ăn Uống Trong Tuần',
                                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                TextButton.icon(
-                                  onPressed: _isGenerating ? null : _generateAIPlan,
-                                  icon: const Icon(Icons.refresh_rounded, size: 16),
-                                  label: const Text('Đổi thực đơn', style: TextStyle(fontSize: 12)),
+                                InkWell(
+                                  onTap: _isGenerating ? null : _generateAIPlan,
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.refresh_rounded, size: 16, color: AppColors.primary),
+                                        SizedBox(width: 4),
+                                        Text('Đổi thực đơn', style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -378,6 +434,53 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                             _buildMockMealDayCard(context, 'Thứ Sáu', 'Hủ tiếu Nam Vang', 'Mực xào sa tế & canh rau ngót', 'Thịt kho tàu & trứng luộc', activeCurrency),
                             _buildMockMealDayCard(context, 'Thứ Bảy', 'Bánh mì ốp la pate', 'Lẩu thái hải sản gia đình', 'Cơm chiên hải sản', activeCurrency),
                             _buildMockMealDayCard(context, 'Chủ Nhật', 'Bún bò Huế', 'Cơm gà Hải Nam', 'Canh sườn hầm củ quả', activeCurrency),
+
+                            // Cycle Next Week Action Card
+                            const SizedBox(height: AppSpacing.md),
+                            AppCard(
+                              color: AppColors.primary.withOpacity(0.06),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: const [
+                                      Icon(Icons.autorenew_rounded, color: AppColors.primary),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        '🔄 Vòng Lặp Tuần Tiếp Theo',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Khi hoàn thành tuần ăn, hãy lên thực đơn tuần mới. AI sẽ quét toàn bộ thực phẩm còn thừa trong tủ lạnh để tối ưu chi phí đi chợ!',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          icon: const Icon(Icons.copy_rounded, size: 16),
+                                          label: const Text('Sao chép tuần này', style: TextStyle(fontSize: 11)),
+                                          onPressed: _copyPlanToNextWeek,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                                          label: const Text('Tạo thực đơn tuần mới', style: TextStyle(fontSize: 11)),
+                                          onPressed: _generateAIPlan,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 80),
                           ],
                         );
                       },
@@ -405,27 +508,40 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                 ],
               ),
               floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-              floatingActionButton: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: _generateChecklistAndGoShopping,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
-                      elevation: 4,
+              floatingActionButton: mealPlanState.asData?.value == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: InkWell(
+                          onTap: _generateChecklistAndGoShopping,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text(
+                                  '🛒 Tạo Danh Sách Mua Sắm & Đi Chợ ➔',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    icon: const Icon(Icons.shopping_cart_checkout_rounded),
-                    label: const Text(
-                      '🛒 Tạo Danh Sách Mua Sắm & Đi Chợ ➔',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                  ),
-                ),
-              ),
             );
           },
         );
@@ -433,30 +549,52 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     );
   }
 
-  Widget _buildComplexityChip(String label, String key) {
+  Widget _buildComplexityOptionTile(String title, String subtitle, String key) {
     final isSelected = _selectedComplexity == key;
-    return ChoiceChip(
-      showCheckmark: false,
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? Colors.white : AppColors.primary,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: () => setState(() => _selectedComplexity = key),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(isDark ? 0.25 : 0.12)
+              : (isDark ? AppColors.bgCardDark : Colors.white),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : (isDark ? Colors.white12 : Colors.black12),
+            width: isSelected ? 1.8 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? AppColors.primary : (isDark ? Colors.white : Colors.black87),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: isSelected
+                    ? AppColors.primary
+                    : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
-      selected: isSelected,
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.primary.withOpacity(0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        side: BorderSide(
-          color: isSelected ? AppColors.primary : AppColors.primary.withOpacity(0.2),
-        ),
-      ),
-      onSelected: (sel) {
-        if (sel) setState(() => _selectedComplexity = key);
-      },
     );
   }
 

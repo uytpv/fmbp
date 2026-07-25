@@ -28,6 +28,24 @@ class FirestoreService {
     });
   }
 
+  Future<User?> getUser(String userId) async {
+    final snap = await _db.collection('users').doc(userId).get();
+    if (!snap.exists) return null;
+    final data = snap.data()!;
+    final familyId = data['familyId'] as String? ?? data['family_id'] as String?;
+    final email = data['email'] as String? ?? '';
+    final displayName = data['displayName'] as String? ?? data['display_name'] as String? ?? '';
+    final role = data['role'] as String? ?? 'MEMBER';
+
+    return User(
+      id: snap.id,
+      familyId: familyId,
+      email: email,
+      displayName: displayName,
+      role: role,
+    );
+  }
+
   /// Đảm bảo User Document luôn tồn tại trong Firestore (tạo mới nếu chưa có, hoặc merge nếu đã có)
   Future<void> ensureUserDocument(String userId, String email, {String? displayName}) async {
     final userRef = _db.collection('users').doc(userId);
@@ -82,6 +100,25 @@ class FirestoreService {
     });
 
     return familyId;
+  }
+
+  Future<void> updateFamilyGroup(
+    String familyId, {
+    String? name,
+    String? currency,
+    double? monthlyIncome,
+    List<FixedExpense>? fixedExpenses,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (name != null) updates['name'] = name;
+    if (currency != null) updates['currency'] = currency;
+    if (monthlyIncome != null) updates['monthlyIncome'] = monthlyIncome;
+    if (fixedExpenses != null) {
+      updates['fixedExpenses'] = fixedExpenses.map((e) => e.toJson()).toList();
+    }
+    if (updates.isNotEmpty) {
+      await _db.collection('families').doc(familyId).set(updates, SetOptions(merge: true));
+    }
   }
 
   Stream<FamilyGroup?> watchFamily(String familyId) {

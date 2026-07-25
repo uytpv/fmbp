@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
-import '../features/family/presentation/onboarding_screen.dart';
+import '../features/family/presentation/onboarding_budget_screen.dart';
+import '../features/family/presentation/onboarding_members_screen.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../core/services/firebase_auth_service.dart';
 import '../core/services/firestore_service.dart';
@@ -24,7 +25,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) => const OnboardingBudgetScreen(),
+        routes: [
+          GoRoute(
+            path: 'members',
+            builder: (context, state) {
+              final familyId = state.uri.queryParameters['familyId'];
+              return OnboardingMembersScreen(familyId: familyId);
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/dashboard',
@@ -33,7 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) async {
       final user = authStream.value;
-      
+
       final isLoggingIn = state.matchedLocation == '/login';
       final isRegistering = state.matchedLocation == '/register';
 
@@ -43,10 +53,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 2. Nếu đã đăng nhập, kiểm tra người dùng đã tham gia gia đình chưa
+      // 2. Nếu đã đăng nhập, kiểm tra người dùng đã tham gia gia đình chưa khi ở màn Login/Register
       if (isLoggingIn || isRegistering) {
         try {
-          // Lấy thông tin user document từ Firestore
           final userDoc = await ref.read(firestoreServiceProvider).watchUser(user.uid).first;
           if (userDoc == null || userDoc.familyId == null) {
             return '/onboarding';

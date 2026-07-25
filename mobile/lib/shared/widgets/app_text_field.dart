@@ -72,12 +72,14 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   void _handleFocusChange() {
+    if (!mounted) return;
     if (!_effectiveFocusNode.hasFocus) {
       _evaluateMathExpression();
     }
   }
 
   void _evaluateMathExpression() {
+    if (!mounted) return;
     if (!_isMathEnabled) return;
     final ctrl = widget.controller;
     if (ctrl == null || ctrl.text.trim().isEmpty) return;
@@ -95,7 +97,7 @@ class _AppTextFieldState extends State<AppTextField> {
         ctrl.selection = TextSelection.fromPosition(
           TextPosition(offset: formattedResult.length),
         );
-        if (widget.onChanged != null) {
+        if (mounted && widget.onChanged != null) {
           widget.onChanged!(formattedResult);
         }
       }

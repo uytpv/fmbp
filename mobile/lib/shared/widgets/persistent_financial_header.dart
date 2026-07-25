@@ -36,160 +36,185 @@ class PersistentFinancialHeader extends ConsumerWidget {
             final family = familySnap.data;
             final currency = family?.currency ?? 'EUR';
 
-            return budgetState.when(
-              data: (budget) {
-                if (budget == null) return _buildNoBudgetCard(context, family);
+            final budget = budgetState.value;
 
-                final allocated = budget.allocatedAmount.toDouble();
-                final spent = budget.spentAmount.toDouble();
-                final remaining = allocated - spent;
-                final percentRemaining = allocated > 0 ? (remaining / allocated).clamp(0.0, 1.0) : 0.0;
+            if (budget == null) {
+              if (budgetState.isLoading) {
+                return const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              return _buildNoBudgetCard(context, family);
+            }
 
-                // Xác định màu tiến trình
-                Color progressColor = AppColors.primary;
-                String statusLabel = 'Ngân sách an toàn';
+            final allocated = budget.allocatedAmount.toDouble();
+            final spent = budget.spentAmount.toDouble();
+            final remaining = allocated - spent;
+            final percentRemaining = allocated > 0 ? (remaining / allocated).clamp(0.0, 1.0) : 0.0;
 
-                if (percentRemaining < 0.15) {
-                  progressColor = AppColors.error;
-                  statusLabel = 'Cảnh báo: Sắp hết ngân sách!';
-                } else if (percentRemaining < 0.40) {
-                  progressColor = Colors.orange;
-                  statusLabel = 'Cần cân đối các bữa ăn';
-                }
+            // Xác định màu tiến trình
+            Color progressColor = AppColors.primary;
+            String statusLabel = 'Ngân sách an toàn';
 
-                return Container(
-                  margin: const EdgeInsets.all(AppSpacing.md),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.bgCardDark : Colors.white,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                    border: Border.all(color: progressColor.withOpacity(0.4), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+            if (percentRemaining < 0.15) {
+              progressColor = AppColors.error;
+              statusLabel = 'Cảnh báo: Sắp hết ngân sách!';
+            } else if (percentRemaining < 0.40) {
+              progressColor = Colors.orange;
+              statusLabel = 'Cần cân đối các bữa ăn';
+            }
+
+            return Container(
+              margin: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.bgCardDark : Colors.white,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: progressColor.withOpacity(0.4), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: progressColor.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.account_balance_wallet_rounded,
-                                  size: 18,
-                                  color: progressColor,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Kế Hoạch Ngân Sách Tuần',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    statusLabel,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: progressColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-
-                          // Nút Điều Chỉnh Ngân Sách
-                          InkWell(
-                            onTap: () {
-                              AdjustBudgetBottomSheet.show(
-                                context,
-                                family: family,
-                                currentBudget: budget,
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Điều Chỉnh',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: progressColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Số dư ngân sách
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Còn lại: ${currencySvc.format(remaining, currency)}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            child: Icon(
+                              Icons.account_balance_wallet_rounded,
+                              size: 18,
                               color: progressColor,
                             ),
                           ),
-                          Text(
-                            '/ ${currencySvc.format(allocated, currency)}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                            ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Kế Hoạch Ngân Sách Tuần',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                statusLabel,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: progressColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
 
-                      // Spending Progress Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: percentRemaining,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey.withOpacity(0.2),
-                          valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                      // Nút Điều Chỉnh Ngân Sách
+                      InkWell(
+                        onTap: () {
+                          AdjustBudgetBottomSheet.show(
+                            context,
+                            family: family,
+                            currentBudget: budget,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
+                              SizedBox(width: 4),
+                              Text(
+                                'Điều Chỉnh',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-              loading: () => const SizedBox(),
-              error: (_, __) => _buildNoBudgetCard(context, family),
+
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Progress Bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: percentRemaining,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Chi tiết số tiền
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Còn lại:',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                          Text(
+                            '${currencySvc.format(remaining.round(), currency)} / ${currencySvc.format(allocated.round(), currency)}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: progressColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: progressColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        ),
+                        child: Text(
+                          'Đã tiêu: ${currencySvc.format(spent.round(), currency)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: progressColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -244,18 +269,26 @@ class PersistentFinancialHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          ElevatedButton.icon(
-            onPressed: () {
+          InkWell(
+            onTap: () {
               AdjustBudgetBottomSheet.show(context, family: family, currentBudget: null);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.tune_rounded, size: 14, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Thiết Lập', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                ],
+              ),
             ),
-            icon: const Icon(Icons.tune_rounded, size: 14),
-            label: const Text('Thiết Lập', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           ),
         ],
       ),

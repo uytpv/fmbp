@@ -278,10 +278,24 @@ class _FamilyMembersSheetState extends ConsumerState<FamilyMembersSheet> {
                           const SizedBox(height: 12),
                           const Text('Chưa có thông tin thành viên gia đình'),
                           const SizedBox(height: 8),
-                          ElevatedButton.icon(
-                            onPressed: () => _addOrEditMemberDialog(),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Thêm Thành Viên Ngay'),
+                          InkWell(
+                            onTap: () => _addOrEditMemberDialog(),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.add, size: 18, color: Colors.white),
+                                  SizedBox(width: 6),
+                                  Text('Thêm Thành Viên Ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
