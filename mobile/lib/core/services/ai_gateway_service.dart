@@ -17,8 +17,15 @@ class AIGatewayService {
         ));
 
   static String _getDefaultBaseUrl() {
-    return 'http://${AppConfig.localHost}:8000';
+    const envUrl = String.fromEnvironment('AI_GATEWAY_URL');
+    if (envUrl.isNotEmpty) return envUrl;
+    if (kIsWeb && !kDebugMode) {
+      return ''; // Trên Web Production sử dụng relative path qua Firebase Hosting rewrites
+    }
+    // Mặc định kết nối Firebase Cloud Functions / AI Gateway
+    return 'http://${AppConfig.localHost}:5001/fmbp-dev/us-central1/aiGateway';
   }
+
 
   /// Gợi ý thực đơn dựa trên ngân sách tuần và nguyên liệu trong tủ lạnh
   Future<Map<String, dynamic>> suggestMenu({

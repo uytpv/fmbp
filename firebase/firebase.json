@@ -3,12 +3,36 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "functions": {
+    "source": "../functions"
+  },
+  "hosting": {
+    "public": "../mobile/build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/v1/ai/**",
+        "function": "aiGateway"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "emulators": {
     "auth": {
       "port": 9099
     },
     "firestore": {
       "port": 8080
+    },
+    "functions": {
+      "port": 5001
     },
     "ui": {
       "enabled": true,
@@ -17,3 +41,4 @@
     "singleProjectMode": true
   }
 }
+

@@ -56,3 +56,9 @@ export const onFamilyGroupDeleted = functions.firestore
       functions.logger.error(`Error deleting sub-collections for family ${familyId}:`, error);
     }
   });
+
+// ------------------------------------------------------------------------------
+// AI Gateway Cloud Function
+// ------------------------------------------------------------------------------
+export { aiGateway } from "./aiGateway";
+
