@@ -1,89 +1,136 @@
 # ==============================================================================
-# FMBP Monorepo - Git Ignore Configuration
+# FMBP Monorepo - Comprehensive Git Ignore Configuration
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# IDEs & Editors
+# Operating System & IDEs
 # ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.iml
 *.ipr
 *.iws
 *.sublime-project
 *.sublime-workspace
-.DS_Store
-Thumbs.db
-desktop.ini
+.history/
 
 # ------------------------------------------------------------------------------
-# Python & AI Gateway (ai-server/)
+# Environment Variables & Secrets
 # ------------------------------------------------------------------------------
-ai-server/__pycache__/
-ai-server/*.pyc
-ai-server/*.pyo
-ai-server/*.pyd
-ai-server/.venv/
-ai-server/venv/
-ai-server/env/
-ai-server/ENV/
-ai-server/.env
-ai-server/.pytest_cache/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
 
 # ------------------------------------------------------------------------------
-# Node.js & Cloud Functions (functions/)
+# Node.js & Firebase Cloud Functions (functions/, web/, admin/, etc.)
 # ------------------------------------------------------------------------------
-functions/node_modules/
+node_modules/
+**/node_modules/
 functions/lib/
-functions/npm-debug.log*
-functions/yarn-debug.log*
-functions/yarn-error.log*
-functions/.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.node_repl_history
+dist/
+out/
 functions/.runtimeconfig.json
 
 # ------------------------------------------------------------------------------
-# Firebase Local Emulators
+# Python & AI Server (ai-server/)
 # ------------------------------------------------------------------------------
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-hub-debug.log
-pubsub-debug.log
-storage-debug.log
-database-debug.log
-firebase/.firebase/
-firebase/firestore-debug.log
-firebase/firebase-debug.log
-firebase/emulator-data/
-emulator-data/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 # ------------------------------------------------------------------------------
 # Dart & Flutter (mobile/ and shared packages)
 # ------------------------------------------------------------------------------
 .dart_tool/
+**/.dart_tool/
 .packages
+**/.packages
 .pub-cache/
 .pub/
 build/
+**/build/
+coverage/
+**/coverage/
+doc/api/
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Local configuration and credentials
-mobile/.env
-mobile/.flutter-plugins
-mobile/.flutter-plugins-dependencies
-mobile/android/local.properties
-mobile/android/key.properties
-mobile/ios/Flutter/Generated.xcconfig
-mobile/ios/Flutter/flutter_export_environment.sh
-
-# Generated code files (Optional: keep them if you want immediate compilation on clone,
-# but standard practice is to rebuild them using build_runner. Let's ignore build outputs)
+# Generated Code
 *.freezed.dart
 *.g.dart
 
+# Mobile Native Artifacts
+**/android/local.properties
+**/android/key.properties
+**/android/.gradle/
+**/android/app/build/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/profile/
+**/ios/ServiceDefinitions.json
+**/*.xcworkspace
+**/*.xcuserdata
+
 # ------------------------------------------------------------------------------
-# Temporary Scratch files
+# Firebase Emulators & Logs
+# ------------------------------------------------------------------------------
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+hub-debug.log*
+pubsub-debug.log*
+storage-debug.log*
+database-debug.log*
+.firebase/
+**/emulator-data/
+
+# ------------------------------------------------------------------------------
+# Temporary & Scratch Files
 # ------------------------------------------------------------------------------
 scratch/
 temp/
 tmp/
 *.log
+*.tmp
+*.bak
+*.swp
+
