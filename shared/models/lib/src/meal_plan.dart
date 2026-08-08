@@ -12,6 +12,7 @@ abstract class MealPlan with _$MealPlan {
     required DateTime endDate,
     required int totalEstimatedCost, // integer VNĐ
     required String status,          // DRAFT, ACTIVE, COMPLETED
+    List<Map<String, dynamic>>? items,
   }) = _MealPlan;
 
   factory MealPlan.fromJson(Map<String, dynamic> json) => _$MealPlanFromJson(json);

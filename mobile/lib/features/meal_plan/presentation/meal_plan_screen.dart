@@ -426,14 +426,43 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                             ),
                             const SizedBox(height: AppSpacing.xs),
 
-                            // Meal Days (Tapping any meal inspects details)
-                            _buildMockMealDayCard(context, 'Thứ Hai', 'Bánh mì sandwich mứt dâu', 'Cơm sườn kho trứng', 'Canh chua cá hồi & rau muống xào', activeCurrency),
-                            _buildMockMealDayCard(context, 'Thứ Ba', 'Phở bò Hà Nội', 'Thịt heo quay & canh cải băm', 'Cá kho tộ & canh khoai mỡ', activeCurrency),
-                            _buildMockMealDayCard(context, 'Thứ Tư', 'Cháo gà hạt sen', 'Bún mọc sườn chua', 'Tôm hấp dừa & su su xào trứng', activeCurrency),
-                            _buildMockMealDayCard(context, 'Thứ Năm', 'Bún riêu cua', 'Bò xào thiên lý & canh bí đỏ', 'Cơm cá hồi nướng bơ tỏi', activeCurrency),
-                            _buildMockMealDayCard(context, 'Thứ Sáu', 'Hủ tiếu Nam Vang', 'Mực xào sa tế & canh rau ngót', 'Thịt kho tàu & trứng luộc', activeCurrency),
-                            _buildMockMealDayCard(context, 'Thứ Bảy', 'Bánh mì ốp la pate', 'Lẩu thái hải sản gia đình', 'Cơm chiên hải sản', activeCurrency),
-                            _buildMockMealDayCard(context, 'Chủ Nhật', 'Bún bò Huế', 'Cơm gà Hải Nam', 'Canh sườn hầm củ quả', activeCurrency),
+                            // Meal Days dynamically rendered from plan.items
+                            ...() {
+                              final items = plan.items ?? [];
+                              final days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+                              if (items.isEmpty) {
+                                return [
+                                  _buildMockMealDayCard(context, 'Thứ Hai', 'Bánh mì sandwich mứt dâu', 'Cơm sườn kho trứng', 'Canh chua cá hồi & rau muống xào', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Thứ Ba', 'Phở bò Hà Nội', 'Thịt heo quay & canh cải băm', 'Cá kho tộ & canh khoai mỡ', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Thứ Tư', 'Cháo gà hạt sen', 'Bún mọc sườn chua', 'Tôm hấp dừa & su su xào trứng', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Thứ Năm', 'Bún riêu cua', 'Bò xào thiên lý & canh bí đỏ', 'Cơm cá hồi nướng bơ tỏi', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Thứ Sáu', 'Hủ tiếu Nam Vang', 'Mực xào sa tế & canh rau ngót', 'Thịt kho tàu & trứng luộc', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Thứ Bảy', 'Bánh mì ốp la pate', 'Lẩu thái hải sản gia đình', 'Cơm chiên hải sản', activeCurrency),
+                                  _buildMockMealDayCard(context, 'Chủ Nhật', 'Bún bò Huế', 'Cơm gà Hải Nam', 'Canh sườn hầm củ quả', activeCurrency),
+                                ];
+                              }
+
+                              final List<Widget> dayCards = [];
+                              for (final day in days) {
+                                final dayItems = items.where((i) => i['day'] == day).toList();
+                                String bf = 'Bánh mì sandwich';
+                                String lu = 'Cơm sườn kho trứng';
+                                String dn = 'Canh chua cá hồi';
+
+                                for (final it in dayItems) {
+                                  final type = it['meal_type'] ?? it['mealType'];
+                                  final title = it['recipe_title'] ?? it['recipeTitle'] ?? it['title'] ?? '';
+                                  if (type == 'BREAKFAST') bf = title;
+                                  if (type == 'LUNCH') lu = title;
+                                  if (type == 'DINNER') dn = title;
+                                }
+
+                                dayCards.add(
+                                  _buildMockMealDayCard(context, day, bf, lu, dn, activeCurrency),
+                                );
+                              }
+                              return dayCards;
+                            }(),
 
                             // Cycle Next Week Action Card
                             const SizedBox(height: AppSpacing.md),

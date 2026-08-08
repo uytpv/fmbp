@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
+import '../../../core/utils/recipe_ingredient_parser.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/persistent_financial_header.dart';
@@ -346,206 +347,36 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   }
 
   List<Map<String, dynamic>> _compileShoppingItems({
+    required MealPlan? mealPlan,
     required List<PantryItem> pantryItems,
     required int memberCount,
   }) {
-    final factor = memberCount <= 0 ? 1 : memberCount;
+    if (mealPlan == null) return [];
 
-    bool inPantryCheck(String searchKeyword) {
-      final key = searchKeyword.toLowerCase();
-      return pantryItems.any((p) {
-        final name = p.ingredientId.toLowerCase();
-        final loc = p.storageLocation.toLowerCase();
-        return name.contains(key) || key.contains(name) || loc.contains(key);
-      });
+    final rawItems = mealPlan.items ?? [];
+    List<String> recipeTitles = [];
+
+    if (rawItems.isNotEmpty) {
+      recipeTitles = rawItems
+          .map((e) => (e['recipe_title'] ?? e['recipeTitle'] ?? e['title'] ?? '').toString())
+          .where((t) => t.isNotEmpty)
+          .toList();
+    } else {
+      recipeTitles = [
+        'Bánh mì sandwich mứt dâu',
+        'Cơm sườn kho trứng',
+        'Canh chua cá hồi & rau muống xào',
+        'Phở bò Hà Nội',
+        'Thịt heo quay & canh cải băm',
+        'Cá kho tộ & canh khoai mỡ',
+      ];
     }
 
-    final List<Map<String, dynamic>> allItems = [
-      // 🥩 Quầy Thịt & Hải Sản
-      {
-        'id': 'thit_bo',
-        'name': 'Thịt bò tái / phi lê',
-        'qty': '${factor * 250} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 250.0,
-        'unit': 'g',
-        'storageLocation': 'FREEZER',
-        'inPantry': inPantryCheck('bò') || inPantryCheck('beef'),
-      },
-      {
-        'id': 'suon_heo',
-        'name': 'Sườn non heo',
-        'qty': '${factor * 300} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'FREEZER',
-        'inPantry': inPantryCheck('sườn') || inPantryCheck('pork'),
-      },
-      {
-        'id': 'ca_hoi',
-        'name': 'Lườn cá hồi tươi (Lohifilee)',
-        'qty': '${factor * 300} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('cá hồi') || inPantryCheck('lohi') || inPantryCheck('salmon'),
-      },
-      {
-        'id': 'tom_muc',
-        'name': 'Tôm & Mực ống tươi',
-        'qty': '${factor * 300} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'FREEZER',
-        'inPantry': inPantryCheck('tôm') || inPantryCheck('mực') || inPantryCheck('squid'),
-      },
-      {
-        'id': 'thit_ba_chi',
-        'name': 'Thịt ba chỉ heo',
-        'qty': '${factor * 300} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'FREEZER',
-        'inPantry': inPantryCheck('thịt ba chỉ') || inPantryCheck('thịt heo'),
-      },
-      {
-        'id': 'thit_ga',
-        'name': 'Thịt gà đùi / ức tươi',
-        'qty': '${factor * 300} g',
-        'aisle': 'Thịt & Hải sản',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'FREEZER',
-        'inPantry': inPantryCheck('gà') || inPantryCheck('chicken'),
-      },
-
-      // 🥦 Quầy Rau Củ Quả
-      {
-        'id': 'rau_muong_spinach',
-        'name': 'Rau muống / Cải bina (Spinach)',
-        'qty': '2 bó',
-        'aisle': 'Rau củ quả',
-        'rawQty': 2.0,
-        'unit': 'bó',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('rau') || inPantryCheck('spinach') || inPantryCheck('cải'),
-      },
-      {
-        'id': 'ca_chua_dua',
-        'name': 'Cà chua & Thơm / Dứa',
-        'qty': '${factor * 2} quả',
-        'aisle': 'Rau củ quả',
-        'rawQty': factor * 2.0,
-        'unit': 'quả',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('cà chua') || inPantryCheck('dứa'),
-      },
-      {
-        'id': 'su_su_khoai',
-        'name': 'Su su & Khoai môn/Bí đỏ',
-        'qty': '${factor * 2} củ',
-        'aisle': 'Rau củ quả',
-        'rawQty': factor * 2.0,
-        'unit': 'củ',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('su su') || inPantryCheck('khoai') || inPantryCheck('bí'),
-      },
-
-      // 🥚 Quầy Trứng & Sữa
-      {
-        'id': 'trung_ga',
-        'name': 'Trứng gà tươi',
-        'qty': '${factor * 4} quả',
-        'aisle': 'Trứng & Sữa',
-        'rawQty': factor * 4.0,
-        'unit': 'quả',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-      },
-      {
-        'id': 'bo_lat',
-        'name': 'Bơ lạt nướng (Unsalted Butter)',
-        'qty': '${factor * 30} g',
-        'aisle': 'Trứng & Sữa',
-        'rawQty': factor * 30.0,
-        'unit': 'g',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('bơ') || inPantryCheck('butter'),
-      },
-      {
-        'id': 'sua_tuoi',
-        'name': 'Sữa tươi nguyên chất',
-        'qty': '${factor * 200} ml',
-        'aisle': 'Trứng & Sữa',
-        'rawQty': factor * 200.0,
-        'unit': 'ml',
-        'storageLocation': 'FRIDGE',
-        'inPantry': inPantryCheck('sữa') || inPantryCheck('milk'),
-      },
-
-      // 🍞 Quầy Bánh Mì & Mứt
-      {
-        'id': 'banh_mi_sandwich',
-        'name': 'Bánh mì sandwich mềm (Ruisleipä)',
-        'qty': '${factor * 2} lát',
-        'aisle': 'Bánh mì & Mứt',
-        'rawQty': factor * 2.0,
-        'unit': 'lát',
-        'storageLocation': 'PANTRY',
-        'inPantry': inPantryCheck('bánh mì') || inPantryCheck('sandwich') || inPantryCheck('bread'),
-      },
-      {
-        'id': 'mut_dau',
-        'name': 'Mứt dâu tây Lingonberry',
-        'qty': '1 hũ',
-        'aisle': 'Bánh mì & Mứt',
-        'rawQty': 1.0,
-        'unit': 'hũ',
-        'storageLocation': 'PANTRY',
-        'inPantry': inPantryCheck('mứt') || inPantryCheck('dâu') || inPantryCheck('jam'),
-      },
-
-      // 🍜 Quầy Bún Phở & Ngũ Cốc
-      {
-        'id': 'bun_pho',
-        'name': 'Bánh phở & Bún tươi/khô',
-        'qty': '${factor * 300} g',
-        'aisle': 'Bún Phở & Ngũ Cốc',
-        'rawQty': factor * 300.0,
-        'unit': 'g',
-        'storageLocation': 'PANTRY',
-        'inPantry': inPantryCheck('phở') || inPantryCheck('bún') || inPantryCheck('noodle'),
-      },
-      {
-        'id': 'gao_jasmine',
-        'name': 'Gạo thơm Jasmine',
-        'qty': '${factor * 500} g',
-        'aisle': 'Bún Phở & Ngũ Cốc',
-        'rawQty': factor * 500.0,
-        'unit': 'g',
-        'storageLocation': 'PANTRY',
-        'inPantry': inPantryCheck('gạo') || inPantryCheck('rice'),
-      },
-
-      // 🧂 Quầy Gia Vị & Đồ Khô
-      {
-        'id': 'nuoc_da_sa_te',
-        'name': 'Gia vị phở, Sa tế & Nước dừa',
-        'qty': '1 bộ',
-        'aisle': 'Gia vị & Đồ khô',
-        'rawQty': 1.0,
-        'unit': 'bộ',
-        'storageLocation': 'PANTRY',
-        'inPantry': inPantryCheck('gia vị') || inPantryCheck('sa tế') || inPantryCheck('dừa'),
-      },
-    ];
-
-    // Chỉ giữ lại các món CHƯA CÓ TRONG TỦ LẠNH
-    return allItems.where((item) => item['inPantry'] == false).toList();
+    return RecipeIngredientParser.parseMealPlanToShoppingList(
+      recipeTitles: recipeTitles,
+      memberCount: memberCount,
+      pantryItems: pantryItems,
+    );
   }
 
   @override
@@ -570,6 +401,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
             final memberCount = members.isNotEmpty ? members.length : 2;
 
             final compiledItems = _compileShoppingItems(
+              mealPlan: mealPlan,
               pantryItems: pantryItems,
               memberCount: memberCount,
             );

@@ -57,6 +57,8 @@ class MealPlanState extends _$MealPlanState {
       aiResult = _generateFallbackMenu(budget.allocatedAmount, pantry, complexity: complexity);
     }
 
+    final rawMenu = (aiResult['menu'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+
     final planId = const Uuid().v4();
     final mealPlan = MealPlan(
       id: planId,
@@ -65,26 +67,86 @@ class MealPlanState extends _$MealPlanState {
       endDate: budget.endDate,
       totalEstimatedCost: (aiResult['total_estimated_cost'] as num?)?.toInt() ?? (budget.allocatedAmount * 0.85).toInt(),
       status: 'ACTIVE',
+      items: rawMenu,
     );
 
     await firestore.saveMealPlan(userDoc.familyId!, mealPlan);
   }
 
   Map<String, dynamic> _generateFallbackMenu(int weeklyBudget, List<PantryItem> pantry, {String complexity = 'BALANCED'}) {
+    final days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+    
+    final breakfasts = [
+      'Bánh mì sandwich mứt dâu',
+      'Phở bò Hà Nội',
+      'Cháo gà hạt sen',
+      'Bún riêu cua đồng',
+      'Hủ tiếu Nam Vang',
+      'Bánh mì ốp la pate',
+      'Bún bò Huế',
+      'Cháo sườn quẩy nóng',
+      'Xôi gà xé hành phi',
+      'Mì Quảng tôm thịt',
+    ];
+
+    final lunches = [
+      'Cơm sườn kho trứng',
+      'Thịt heo quay & canh cải băm',
+      'Bún mọc sườn chua',
+      'Bò xào thiên lý & canh bí đỏ',
+      'Mực xào sa tế & canh rau ngót',
+      'Lẩu thái hải sản gia đình',
+      'Cơm gà Hải Nam',
+      'Thịt kho tàu & trứng luộc',
+      'Cơm tấm sườn bì chả',
+      'Gà chiên mắm & canh mồng tơi',
+    ];
+
+    final dinners = [
+      'Canh chua cá hồi & rau muống xào',
+      'Cá kho tộ & canh khoai mỡ',
+      'Tôm hấp dừa & su su xào trứng',
+      'Cơm cá hồi nướng bơ tỏi',
+      'Thịt kho tàu & trứng luộc',
+      'Cơm chiên hải sản',
+      'Canh sườn hầm củ quả',
+      'Lẩu nấm hải sản tươi',
+      'Cá lóc hấp bầu & canh tần dầy lá',
+      'Tôm rim mặn ngọt & canh mướp đắng',
+    ];
+
+    breakfasts.shuffle();
+    lunches.shuffle();
+    dinners.shuffle();
+
+    final List<Map<String, dynamic>> generatedMenu = [];
+
+    for (int i = 0; i < days.length; i++) {
+      final day = days[i];
+      generatedMenu.add({
+        'day': day,
+        'meal_type': 'BREAKFAST',
+        'recipe_title': breakfasts[i % breakfasts.length],
+        'estimated_cost': 25000 + (i * 1000 % 10000),
+      });
+      generatedMenu.add({
+        'day': day,
+        'meal_type': 'LUNCH',
+        'recipe_title': lunches[i % lunches.length],
+        'estimated_cost': 45000 + (i * 2000 % 15000),
+      });
+      generatedMenu.add({
+        'day': day,
+        'meal_type': 'DINNER',
+        'recipe_title': dinners[i % dinners.length],
+        'estimated_cost': 55000 + (i * 3000 % 20000),
+      });
+    }
+
     return {
       'total_estimated_cost': (weeklyBudget * 0.82).toInt(),
-      'advice': 'Thực đơn mẫu tiết kiệm tận dụng nguyên liệu sẵn có trong tủ lạnh.',
-      'menu': [
-        {'day': 'Thứ Hai', 'meal_type': 'BREAKFAST', 'recipe_title': 'Bánh mì sandwich mứt dâu', 'estimated_cost': 25000},
-        {'day': 'Thứ Hai', 'meal_type': 'LUNCH', 'recipe_title': 'Cơm sườn kho trứng', 'estimated_cost': 45000},
-        {'day': 'Thứ Hai', 'meal_type': 'DINNER', 'recipe_title': 'Canh chua cá hồi & rau muống xào', 'estimated_cost': 55000},
-        {'day': 'Thứ Ba', 'meal_type': 'BREAKFAST', 'recipe_title': 'Phở bò Hà Nội', 'estimated_cost': 35000},
-        {'day': 'Thứ Ba', 'meal_type': 'LUNCH', 'recipe_title': 'Thịt heo quay & canh cải băm', 'estimated_cost': 40000},
-        {'day': 'Thứ Ba', 'meal_type': 'DINNER', 'recipe_title': 'Cá kho tộ & canh khoai mỡ', 'estimated_cost': 50000},
-        {'day': 'Thứ Tư', 'meal_type': 'BREAKFAST', 'recipe_title': 'Cháo gà hạt sen', 'estimated_cost': 30000},
-        {'day': 'Thứ Tư', 'meal_type': 'LUNCH', 'recipe_title': 'Bún mọc sườn chua', 'estimated_cost': 40000},
-        {'day': 'Thứ Tư', 'meal_type': 'DINNER', 'recipe_title': 'Tôm hấp dừa & su su xào trứng', 'estimated_cost': 60000},
-      ],
+      'advice': 'Thực đơn phong phú tự động cân bằng dinh dưỡng và tiết kiệm ngân sách.',
+      'menu': generatedMenu,
     };
   }
 
