@@ -334,6 +334,198 @@ class RecipeIngredientParser {
         ),
       ],
     },
+    // 🇫🇮 Món Phần Lan & Bắc Âu (Finnish / Nordic)
+    {
+      'keywords': ['lohikeitto', 'súp cá hồi', 'sup ca hoi'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'ca_hoi_finland',
+          name: 'Lườn cá hồi tươi (Lohifilee)',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'kem_tuoi_cream',
+          name: 'Kem tươi Cooking Cream (Ruokakerma)',
+          quantityPerPerson: 100.0,
+          unit: 'ml',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_finland',
+          name: 'Khoai tây củ nhỏ (Peruna)',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'thi_la_tuoi',
+          name: 'Thì là tươi & Hành tỏi',
+          quantityPerPerson: 1.0,
+          unit: 'bó',
+          aisle: 'Rau củ quả',
+          storageLocation: 'FRIDGE',
+        ),
+      ],
+    },
+    {
+      'keywords': ['lihapullat', 'thịt viên bắc âu', 'thit vien'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_bam_nordic',
+          name: 'Thịt bò & heo băm (Jauheliha)',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'mut_lingonberry',
+          name: 'Mứt nam việt quất (Puolukkahillo)',
+          quantityPerPerson: 0.5,
+          unit: 'hũ',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_nghien',
+          name: 'Khoai tây làm nghiền',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['ruisleipä', 'bánh mì đen', 'karjalanpiirakka'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'banh_mi_den',
+          name: 'Bánh mì đen lúa mạch (Ruisleipä)',
+          quantityPerPerson: 2.0,
+          unit: 'lát',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'pho_mai_finland',
+          name: 'Phô mai lát Juusto & Bơ',
+          quantityPerPerson: 1.0,
+          unit: 'hộp',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+      ],
+    },
+    {
+      'keywords': ['karjalanpaisti', 'thịt hầm karelian', 'poronkäristys'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_bo_heo_ham',
+          name: 'Thịt bò & heo nạc hầm',
+          quantityPerPerson: 200.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'ca_rot_hanh_tay',
+          name: 'Cà rốt & Hành tây củ',
+          quantityPerPerson: 1.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+
+    // 🇪🇺 Món Châu Âu (European / Pasta / Steak)
+    {
+      'keywords': ['spaghetti', 'bolognese', 'pasta', 'mỳ ý'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'my_y_spaghetti',
+          name: 'Mỳ Ý Spaghetti',
+          quantityPerPerson: 100.0,
+          unit: 'g',
+          aisle: 'Bún Phở & Ngũ Cốc',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'thit_bo_bam_y',
+          name: 'Thịt bò băm tươi',
+          quantityPerPerson: 120.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'sot_ca_chua_y',
+          name: 'Sốt cà chua Ý & Phô mai Parmesan',
+          quantityPerPerson: 1.0,
+          unit: 'hũ',
+          aisle: 'Gia vị & Đồ khô',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['steak', 'ribeye', 'bít tết', 'cá hồi áp chảo'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_bo_ribeye',
+          name: 'Thịt thăn bò Ribeye / Cá hồi',
+          quantityPerPerson: 200.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'mang_tay_khoai',
+          name: 'Măng tây tươi & Khoai tây chiên',
+          quantityPerPerson: 100.0,
+          unit: 'g',
+          aisle: 'Rau củ quả',
+          storageLocation: 'FRIDGE',
+        ),
+      ],
+    },
+
+    // 🥗 Món Healthy / Clean / Salad
+    {
+      'keywords': ['salad', 'clean', 'healthy', 'quinoa', 'yến mạch'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'uc_ga_tuoi',
+          name: 'Ức gà nạc tươi',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'rau_xa_lach_cabi',
+          name: 'Rau xà lách & Cà chua bi',
+          quantityPerPerson: 1.0,
+          unit: 'hộp',
+          aisle: 'Rau củ quả',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'sot_caesar',
+          name: 'Sốt Caesar / Chanh dây Healthy',
+          quantityPerPerson: 1.0,
+          unit: 'chai',
+          aisle: 'Gia vị & Đồ khô',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
   ];
 
   /// Hàm bóc tách danh sách nguyên liệu tổng hợp từ danh sách Tên món ăn trong Thực Đơn Tuần
