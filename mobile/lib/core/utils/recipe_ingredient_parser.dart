@@ -18,9 +18,227 @@ class ParsedIngredient {
   });
 }
 
-/// Bộ phân tích bóc tách nguyên liệu tự động từ Tên món ăn (Recipe Title)
+/// Bộ phân tích bóc tách nguyên liệu tự động thông minh (Universal Recipe Ingredient Parser)
 class RecipeIngredientParser {
   static final List<Map<String, dynamic>> _dictionary = [
+    // 🇫🇮 PHẦN LAN / BẮC ÂU (FINNISH / NORDIC)
+    {
+      'keywords': ['uunilohi', 'cá hồi nướng', 'cá hồi sốt chanh', 'lohi'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'ca_hoi_uunilohi',
+          name: 'Lườn cá hồi tươi (Lohifilee)',
+          quantityPerPerson: 180.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'chanh_bo_thi_la',
+          name: 'Chanh vàng, Bơ lạt & Thì là tươi',
+          quantityPerPerson: 1.0,
+          unit: 'bộ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_nhat',
+          name: 'Khoai tây củ nhỏ (Peruna)',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['lohikeitto', 'súp cá hồi', 'sup ca hoi'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'ca_hoi_finland',
+          name: 'Lườn cá hồi tươi (Lohifilee)',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'kem_tuoi_cream',
+          name: 'Kem tươi Cooking Cream (Ruokakerma)',
+          quantityPerPerson: 100.0,
+          unit: 'ml',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_finland',
+          name: 'Khoai tây củ nhỏ (Peruna)',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'thi_la_tuoi',
+          name: 'Thì là tươi & Hành tỏi',
+          quantityPerPerson: 1.0,
+          unit: 'bó',
+          aisle: 'Rau củ quả',
+          storageLocation: 'FRIDGE',
+        ),
+      ],
+    },
+    {
+      'keywords': ['lihapullat', 'thịt viên bắc âu', 'thit vien'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_bam_nordic',
+          name: 'Thịt bò & heo băm (Jauheliha)',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'mut_lingonberry',
+          name: 'Mứt nam việt quất (Puolukkahillo)',
+          quantityPerPerson: 0.5,
+          unit: 'hũ',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_nghien',
+          name: 'Khoai tây làm nghiền',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['ruisleipä', 'ruisleipa', 'bánh mì đen', 'karjalanpiirakka'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'banh_mi_den',
+          name: 'Bánh mì đen lúa mạch (Ruisleipä)',
+          quantityPerPerson: 2.0,
+          unit: 'lát',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'pho_mai_finland',
+          name: 'Phô mai lát Juusto & Bơ lạt',
+          quantityPerPerson: 1.0,
+          unit: 'hộp',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+      ],
+    },
+    {
+      'keywords': ['kaurapuuro', 'puuro', 'cháo yến mạch'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'yen_mach_hiutale',
+          name: 'Yến mạch cán dẹt (Kaurahiutale)',
+          quantityPerPerson: 80.0,
+          unit: 'g',
+          aisle: 'Bún Phở & Ngũ Cốc',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'sua_tuoi_maito',
+          name: 'Sữa tươi (Maito)',
+          quantityPerPerson: 200.0,
+          unit: 'ml',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'mut_lingonberry_oats',
+          name: 'Mứt nam việt quất Lingonberry',
+          quantityPerPerson: 0.5,
+          unit: 'hũ',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['pannukakku', 'kếp phần lan', 'bánh kếp nướng'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'bot_pan',
+          name: 'Bột làm bánh kếp & Yến mạch',
+          quantityPerPerson: 1.0,
+          unit: 'gói',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'trung_ga_pan',
+          name: 'Trứng gà tươi',
+          quantityPerPerson: 1.0,
+          unit: 'quả',
+          aisle: 'Trứng & Sữa',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'mut_quat_pan',
+          name: 'Mứt việt quất / Nam việt quất',
+          quantityPerPerson: 0.5,
+          unit: 'hũ',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['pyttipannu', 'xúc xích phần lan'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'xuc_xich_makkara',
+          name: 'Xúc xích Phần Lan (Makkara)',
+          quantityPerPerson: 150.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FRIDGE',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_pytt',
+          name: 'Khoai tây củ',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
+      'keywords': ['karjalanpaisti', 'thịt hầm karelian', 'poronkäristys'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_bo_heo_ham',
+          name: 'Thịt bò & heo nạc hầm',
+          quantityPerPerson: 200.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'ca_rot_hanh_tay',
+          name: 'Cà rốt & Hành tây củ',
+          quantityPerPerson: 1.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+
     // 🇻🇳 MÓN VIỆT NAM (VIETNAMESE)
     {
       'keywords': ['cơm gà hải nam', 'cơm gà', 'com ga'],
@@ -391,245 +609,6 @@ class RecipeIngredientParser {
         ),
       ],
     },
-    {
-      'keywords': ['lẩu thái', 'lau thai'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'hai_san_lau',
-          name: 'Tôm, mực & cá viên hải sản',
-          quantityPerPerson: 200.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FREEZER',
-        ),
-        ParsedIngredient(
-          id: 'nam_kim_cham',
-          name: 'Nấm kim châm & Rau muống',
-          quantityPerPerson: 1.0,
-          unit: 'gói',
-          aisle: 'Rau củ quả',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'gia_vi_lau_thai',
-          name: 'Sốt gia vị Lẩu Thái',
-          quantityPerPerson: 1.0,
-          unit: 'gói',
-          aisle: 'Gia vị & Đồ khô',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
-    {
-      'keywords': ['cá lóc hấp bầu', 'cá lóc'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'ca_loc_tuoi',
-          name: 'Cá lóc tươi nguyên con',
-          quantityPerPerson: 200.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'bau_tuoi',
-          name: 'Bầu trái tươi & Tần dầy lá',
-          quantityPerPerson: 1.0,
-          unit: 'trái',
-          aisle: 'Rau củ quả',
-          storageLocation: 'FRIDGE',
-        ),
-      ],
-    },
-
-    // 🇫🇮 MÓN PHẦN LAN & BẮC ÂU (FINNISH / NORDIC)
-    {
-      'keywords': ['lohikeitto', 'súp cá hồi', 'sup ca hoi'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'ca_hoi_finland',
-          name: 'Lườn cá hồi tươi (Lohifilee)',
-          quantityPerPerson: 150.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'kem_tuoi_cream',
-          name: 'Kem tươi Cooking Cream (Ruokakerma)',
-          quantityPerPerson: 100.0,
-          unit: 'ml',
-          aisle: 'Trứng & Sữa',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'khoai_tay_finland',
-          name: 'Khoai tây củ nhỏ (Peruna)',
-          quantityPerPerson: 2.0,
-          unit: 'củ',
-          aisle: 'Rau củ quả',
-          storageLocation: 'PANTRY',
-        ),
-        ParsedIngredient(
-          id: 'thi_la_tuoi',
-          name: 'Thì là tươi & Hành tỏi',
-          quantityPerPerson: 1.0,
-          unit: 'bó',
-          aisle: 'Rau củ quả',
-          storageLocation: 'FRIDGE',
-        ),
-      ],
-    },
-    {
-      'keywords': ['lihapullat', 'thịt viên bắc âu', 'thit vien'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'thit_bam_nordic',
-          name: 'Thịt bò & heo băm (Jauheliha)',
-          quantityPerPerson: 150.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FREEZER',
-        ),
-        ParsedIngredient(
-          id: 'mut_lingonberry',
-          name: 'Mứt nam việt quất (Puolukkahillo)',
-          quantityPerPerson: 0.5,
-          unit: 'hũ',
-          aisle: 'Bánh mì & Mứt',
-          storageLocation: 'PANTRY',
-        ),
-        ParsedIngredient(
-          id: 'khoai_tay_nghien',
-          name: 'Khoai tây làm nghiền',
-          quantityPerPerson: 2.0,
-          unit: 'củ',
-          aisle: 'Rau củ quả',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
-    {
-      'keywords': ['ruisleipä', 'ruisleipa', 'bánh mì đen', 'karjalanpiirakka'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'banh_mi_den',
-          name: 'Bánh mì đen lúa mạch (Ruisleipä)',
-          quantityPerPerson: 2.0,
-          unit: 'lát',
-          aisle: 'Bánh mì & Mứt',
-          storageLocation: 'PANTRY',
-        ),
-        ParsedIngredient(
-          id: 'pho_mai_finland',
-          name: 'Phô mai lát Juusto & Bơ lạt',
-          quantityPerPerson: 1.0,
-          unit: 'hộp',
-          aisle: 'Trứng & Sữa',
-          storageLocation: 'FRIDGE',
-        ),
-      ],
-    },
-    {
-      'keywords': ['kaurapuuro', 'puuro', 'cháo yến mạch'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'yen_mach_hiutale',
-          name: 'Yến mạch cán dẹt (Kaurahiutale)',
-          quantityPerPerson: 80.0,
-          unit: 'g',
-          aisle: 'Bún Phở & Ngũ Cốc',
-          storageLocation: 'PANTRY',
-        ),
-        ParsedIngredient(
-          id: 'sua_tuoi_maito',
-          name: 'Sữa tươi (Maito)',
-          quantityPerPerson: 200.0,
-          unit: 'ml',
-          aisle: 'Trứng & Sữa',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'mut_lingonberry_oats',
-          name: 'Mứt nam việt quất Lingonberry',
-          quantityPerPerson: 0.5,
-          unit: 'hũ',
-          aisle: 'Bánh mì & Mứt',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
-    {
-      'keywords': ['pannukakku', 'kếp phần lan', 'bánh kếp nướng'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'bot_pan',
-          name: 'Bột làm bánh kếp & Yến mạch',
-          quantityPerPerson: 1.0,
-          unit: 'gói',
-          aisle: 'Bánh mì & Mứt',
-          storageLocation: 'PANTRY',
-        ),
-        ParsedIngredient(
-          id: 'trung_ga_pan',
-          name: 'Trứng gà tươi',
-          quantityPerPerson: 1.0,
-          unit: 'quả',
-          aisle: 'Trứng & Sữa',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'mut_quat_pan',
-          name: 'Mứt việt quất / Nam việt quất',
-          quantityPerPerson: 0.5,
-          unit: 'hũ',
-          aisle: 'Bánh mì & Mứt',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
-    {
-      'keywords': ['pyttipannu', 'xúc xích phần lan'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'xuc_xich_makkara',
-          name: 'Xúc xích Phần Lan (Makkara)',
-          quantityPerPerson: 150.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FRIDGE',
-        ),
-        ParsedIngredient(
-          id: 'khoai_tay_pytt',
-          name: 'Khoai tây củ',
-          quantityPerPerson: 2.0,
-          unit: 'củ',
-          aisle: 'Rau củ quả',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
-    {
-      'keywords': ['karjalanpaisti', 'thịt hầm karelian', 'poronkäristys'],
-      'ingredients': [
-        ParsedIngredient(
-          id: 'thit_bo_heo_ham',
-          name: 'Thịt bò & heo nạc hầm',
-          quantityPerPerson: 200.0,
-          unit: 'g',
-          aisle: 'Thịt & Hải sản',
-          storageLocation: 'FREEZER',
-        ),
-        ParsedIngredient(
-          id: 'ca_rot_hanh_tay',
-          name: 'Cà rốt & Hành tây củ',
-          quantityPerPerson: 1.0,
-          unit: 'củ',
-          aisle: 'Rau củ quả',
-          storageLocation: 'PANTRY',
-        ),
-      ],
-    },
 
     // 🇪🇺 MÓN CHÂU ÂU (EUROPEAN)
     {
@@ -759,6 +738,7 @@ class RecipeIngredientParser {
       final titleLower = title.toLowerCase();
       var foundInDict = false;
 
+      // Tra cứu từ điển theo từ khóa
       for (final entry in _dictionary) {
         final keywords = entry['keywords'] as List<String>;
         final ingredients = entry['ingredients'] as List<ParsedIngredient>;
@@ -785,22 +765,19 @@ class RecipeIngredientParser {
         }
       }
 
-      // Nếu món ăn không có trong từ điển mẫu, tự động lấy Tên món sạch làm 1 nguyên liệu duy nhất
+      // NẾU KHÔNG CÓ TRONG TỪ ĐIỂN MẪU -> TỰ ĐỘNG BÓC TÁCH THÔNG MINH (THỰC PHẨM THỰC TẾ)
+      // TUYỆT ĐỐI KHÔNG TẠO CHUỖI "Nguyên liệu chuẩn bị làm: [Tên món]"
       if (!foundInDict) {
-        final cleanTitle = title
-            .replaceAll(RegExp(r'[\(\)]'), '')
-            .trim();
-        final fallbackId = 'fb_${cleanTitle.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '').replaceAll(RegExp(r'\s+'), '_')}';
-        
-        if (!aggregatedMap.containsKey(fallbackId)) {
-          aggregatedMap[fallbackId] = {
-            'id': fallbackId,
-            'name': 'Nguyên liệu chuẩn bị làm: $cleanTitle',
-            'rawQty': 1.0 * factor,
-            'unit': 'bộ',
-            'aisle': 'Rau củ quả',
-            'storageLocation': 'FRIDGE',
-          };
+        final smartIngredients = _generateSmartFallbackIngredients(title, factor);
+        for (final ing in smartIngredients) {
+          final id = ing['id'] as String;
+          final totalQty = ing['rawQty'] as double;
+
+          if (aggregatedMap.containsKey(id)) {
+            aggregatedMap[id]!['rawQty'] = (aggregatedMap[id]!['rawQty'] as double) + totalQty;
+          } else {
+            aggregatedMap[id] = ing;
+          }
         }
       }
     }
@@ -836,5 +813,149 @@ class RecipeIngredientParser {
 
     // Chỉ trả về các nguyên liệu CHƯA CÓ TRONG TỦ LẠNH
     return resultList.where((item) => item['inPantry'] == false).toList();
+  }
+
+  /// Phân tích ngôn ngữ thông minh để tạo ra NGUYÊN LIỆU THẬT từ tên món ăn chưa từng gặp
+  static List<Map<String, dynamic>> _generateSmartFallbackIngredients(String title, int factor) {
+    final t = title.toLowerCase();
+    final List<Map<String, dynamic>> items = [];
+
+    // 1. Phân tích loại Đạm chính (Protein)
+    if (t.contains('cá hồi') || t.contains('lohi') || t.contains('salmon') || t.contains('uunilohi')) {
+      items.add({
+        'id': 'fb_ca_hoi',
+        'name': 'Lườn cá hồi tươi (Fillet / Lohi)',
+        'rawQty': 180.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FRIDGE',
+      });
+    } else if (t.contains('cá') || t.contains('fish')) {
+      items.add({
+        'id': 'fb_ca_tuoi',
+        'name': 'Cá tươi fillet',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FRIDGE',
+      });
+    } else if (t.contains('bò') || t.contains('beef') || t.contains('steak')) {
+      items.add({
+        'id': 'fb_bo_tuoi',
+        'name': 'Thịt bò tươi phi lê / nạc',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else if (t.contains('gà') || t.contains('chicken')) {
+      items.add({
+        'id': 'fb_ga_tuoi',
+        'name': 'Thịt gà tươi đùi / ức',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else if (t.contains('tôm') || t.contains('shrimp')) {
+      items.add({
+        'id': 'fb_tom_tuoi',
+        'name': 'Tôm tươi',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else if (t.contains('mực') || t.contains('squid')) {
+      items.add({
+        'id': 'fb_muc_tuoi',
+        'name': 'Mực tươi',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else if (t.contains('heo') || t.contains('lợn') || t.contains('sườn') || t.contains('pork')) {
+      items.add({
+        'id': 'fb_heo_tuoi',
+        'name': 'Thịt heo / Sườn heo tươi',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else {
+      // Đạm tổng hợp tươi ngon
+      items.add({
+        'id': 'fb_dam_tong_hop',
+        'name': 'Thực phẩm tươi chính (Thịt / Cá / Trứng)',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FRIDGE',
+      });
+    }
+
+    // 2. Phân tích Gia vị / Sốt / Rau nêm đặc trưng
+    if (t.contains('chanh') || t.contains('bơ') || t.contains('thì là')) {
+      items.add({
+        'id': 'fb_chanh_bo_thi_la',
+        'name': 'Chanh vàng, Bơ lạt & Thì là tươi',
+        'rawQty': 1.0 * factor,
+        'unit': 'bộ',
+        'aisle': 'Rau củ quả',
+        'storageLocation': 'FRIDGE',
+      });
+    } else if (t.contains('sốt') || t.contains('sauce') || t.contains('phô mai')) {
+      items.add({
+        'id': 'fb_sot_gia_vi',
+        'name': 'Bơ tỏi, Phô mai & Nước sốt đậm đà',
+        'rawQty': 1.0 * factor,
+        'unit': 'hũ',
+        'aisle': 'Gia vị & Đồ khô',
+        'storageLocation': 'PANTRY',
+      });
+    } else {
+      items.add({
+        'id': 'fb_rau_gia_vi',
+        'name': 'Rau củ tươi & Gia vị nấu ăn',
+        'rawQty': 1.0 * factor,
+        'unit': 'bộ',
+        'aisle': 'Rau củ quả',
+        'storageLocation': 'FRIDGE',
+      });
+    }
+
+    // 3. Phân tích Tinh bột / Rau củ ăn kèm
+    if (t.contains('khoai') || t.contains('nướng lò') || t.contains('uunilohi')) {
+      items.add({
+        'id': 'fb_khoai_tay',
+        'name': 'Khoai tây củ / Măng tây tươi',
+        'rawQty': 150.0 * factor,
+        'unit': 'g',
+        'aisle': 'Rau củ quả',
+        'storageLocation': 'PANTRY',
+      });
+    } else if (t.contains('cơm') || t.contains('cháo')) {
+      items.add({
+        'id': 'fb_gao_thom',
+        'name': 'Gạo thơm Jasmine / Gạo nếp',
+        'rawQty': 100.0 * factor,
+        'unit': 'g',
+        'aisle': 'Bún Phở & Ngũ Cốc',
+        'storageLocation': 'PANTRY',
+      });
+    } else if (t.contains('bún') || t.contains('phở') || t.contains('mỳ') || t.contains('pasta')) {
+      items.add({
+        'id': 'fb_soi_bun_my',
+        'name': 'Sợi bún / Phở / Mỳ Ý tươi',
+        'rawQty': 120.0 * factor,
+        'unit': 'g',
+        'aisle': 'Bún Phở & Ngũ Cốc',
+        'storageLocation': 'PANTRY',
+      });
+    }
+
+    return items;
   }
 }

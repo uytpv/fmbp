@@ -536,6 +536,15 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
   List<String> _getCookingStepsForRecipe(String title) {
     final t = title.toLowerCase();
 
+    if (t.contains('uunilohi') || (t.contains('cá hồi') && t.contains('nướng'))) {
+      return [
+        'Bước 1: Rửa sạch lườn cá hồi tươi (Lohifilee), thấm khô và đặt lên khay nướng có lót giấy nướng.',
+        'Bước 2: Trộn bơ lạt đun chảy với nước cốt chanh vàng, muối biển, tiêu đen và thì là tươi băm nhỏ.',
+        'Bước 3: Rưới đều sốt chanh thì là lên mặt cá hồi, nướng ở 200°C trong 15-18 phút cho thịt cá mọng nước.',
+        'Bước 4: Bày cá hồi nướng vàng mọng ra đĩa cùng khoai tây củ nhỏ luộc và trang trí thì là tươi.',
+      ];
+    }
+
     if (t.contains('pannukakku') || t.contains('kếp')) {
       return [
         'Bước 1: Đánh tan trứng gà cùng sữa tươi (Maito), thêm bột làm bánh kếp và ít bơ lạt đánh mịn.',
@@ -626,11 +635,46 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
       ];
     }
 
+    // Phân tích kỹ thuật nấu ăn & loại đạm chính từ tên món ăn để sinh ra 4 bước chuẩn bếp
+    String mainProtein = 'thực phẩm tươi';
+    if (t.contains('cá')) mainProtein = 'thịt cá tươi fillet';
+    if (t.contains('bò')) mainProtein = 'thịt bò tươi ngon';
+    if (t.contains('gà')) mainProtein = 'thịt gà tươi nạc';
+    if (t.contains('heo') || t.contains('sườn')) mainProtein = 'thịt heo / sườn tươi';
+    if (t.contains('tôm') || t.contains('mực')) mainProtein = 'hải sản tươi ngon';
+
+    if (t.contains('nướng') || t.contains('uuni') || t.contains('bake') || t.contains('roast')) {
+      return [
+        'Bước 1: Rửa sạch $mainProtein và cắt miếng vừa ăn, rửa sạch rau củ nêm kèm theo.',
+        'Bước 2: Pha sốt ướp với bơ lạt, tiêu đen, tỏi băm và gia vị thơm. Thoa đều lên mặt $mainProtein.',
+        'Bước 3: Xếp vào khay nướng lót giấy bạc, nướng lò ở 190°C - 200°C trong 15-20 phút cho vàng ngậy.',
+        'Bước 4: Rưới phần sốt còn lại lên trên, bày ra đĩa ăn kèm khoai tây / cơm dẻo nóng hổi.',
+      ];
+    }
+
+    if (t.contains('hầm') || t.contains('súp') || t.contains('canh') || t.contains('stew') || t.contains('soup')) {
+      return [
+        'Bước 1: Sơ chế $mainProtein và rau củ tươi sạch sẽ, thái khối vuông vừa ăn.',
+        'Bước 2: Đun sôi nước dùng, cho củ quả ăn kèm vào ninh trước 10 phút cho chín mềm.',
+        'Bước 3: Thả $mainProtein vào ninh nhỏ lửa, rưới kem tươi / nước cốt nêm vị vừa ăn.',
+        'Bước 4: Rắc hành thì là tươi cắt nhỏ lên trên, múc súp ra bát dùng nóng cùng gia đình.',
+      ];
+    }
+
+    if (t.contains('xào') || t.contains('áp chảo') || t.contains('pan-seared') || t.contains('fried')) {
+      return [
+        'Bước 1: Thái mỏng $mainProtein, ướp cùng tỏi băm, tiêu và hạt nêm đậm đà trong 10 phút.',
+        'Bước 2: Đun nóng chảo cùng ít dầu olive / bơ lạt, phi thơm hành tỏi.',
+        'Bước 3: Cho $mainProtein và rau củ vào đảo nhanh tay trên lửa lớn cho chín tới giữ độ ngọt.',
+        'Bước 4: Rưới thêm sốt đậm đà, bày ra đĩa rắc tiêu hạt và dùng nóng.',
+      ];
+    }
+
     return [
-      'Bước 1: Sơ chế các nguyên liệu $title sạch sẽ, thái miếng vừa ăn.',
-      'Bước 2: Tẩm ướp gia vị bơ tỏi và nước sốt vừa ăn trong 10 phút.',
-      'Bước 3: Chế biến áp chảo / nướng lò / nấu súp ở nhiệt độ vừa cho nguyên liệu chín tới thơm ngon.',
-      'Bước 4: Bày món $title ra đĩa và thưởng thức cùng gia đình.',
+      'Bước 1: Sơ chế $mainProtein tươi sạch sẽ, ướp cùng chút gia vị bơ tỏi trong 10 phút.',
+      'Bước 2: Đun nóng chảo/nồi, phi thơm hành tỏi rồi cho $mainProtein vào chế biến chín tới.',
+      'Bước 3: Nêm nếm nước sốt đậm đà cùng rau củ quả tươi cho dậy mùi thơm phức.',
+      'Bước 4: Bày ra đĩa rắc chút tiêu tươi, ăn kèm cơm dẻo / khoai tây cùng gia đình.',
     ];
   }
 
