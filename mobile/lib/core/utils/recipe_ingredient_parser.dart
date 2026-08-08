@@ -23,6 +23,35 @@ class RecipeIngredientParser {
   static final List<Map<String, dynamic>> _dictionary = [
     // 🇫🇮 PHẦN LAN / BẮC ÂU (FINNISH / NORDIC)
     {
+      'keywords': ['poronkäristys', 'poronkaristys', 'tuần lộc', 'bò xào mứt', 'xào mứt nam việt quất'],
+      'ingredients': [
+        ParsedIngredient(
+          id: 'thit_tuan_loc_bo',
+          name: 'Thịt bò / Thịt tuần lộc tươi (Poronkäristys)',
+          quantityPerPerson: 180.0,
+          unit: 'g',
+          aisle: 'Thịt & Hải sản',
+          storageLocation: 'FREEZER',
+        ),
+        ParsedIngredient(
+          id: 'mut_nam_viet_quat_poron',
+          name: 'Mứt nam việt quất Phần Lan (Puolukkahillo)',
+          quantityPerPerson: 0.5,
+          unit: 'hũ',
+          aisle: 'Bánh mì & Mứt',
+          storageLocation: 'PANTRY',
+        ),
+        ParsedIngredient(
+          id: 'khoai_tay_bo_lat',
+          name: 'Khoai tây củ & Bơ lạt',
+          quantityPerPerson: 2.0,
+          unit: 'củ',
+          aisle: 'Rau củ quả',
+          storageLocation: 'PANTRY',
+        ),
+      ],
+    },
+    {
       'keywords': ['uunilohi', 'cá hồi nướng', 'cá hồi sốt chanh', 'lohi'],
       'ingredients': [
         ParsedIngredient(
@@ -218,7 +247,7 @@ class RecipeIngredientParser {
       ],
     },
     {
-      'keywords': ['karjalanpaisti', 'thịt hầm karelian', 'poronkäristys'],
+      'keywords': ['karjalanpaisti', 'thịt hầm karelian'],
       'ingredients': [
         ParsedIngredient(
           id: 'thit_bo_heo_ham',
@@ -821,7 +850,16 @@ class RecipeIngredientParser {
     final List<Map<String, dynamic>> items = [];
 
     // 1. Phân tích loại Đạm chính (Protein)
-    if (t.contains('cá hồi') || t.contains('lohi') || t.contains('salmon') || t.contains('uunilohi')) {
+    if (t.contains('tuần lộc') || t.contains('poron')) {
+      items.add({
+        'id': 'fb_tuan_loc',
+        'name': 'Thịt bò / Thịt tuần lộc tươi (Poronkäristys)',
+        'rawQty': 180.0 * factor,
+        'unit': 'g',
+        'aisle': 'Thịt & Hải sản',
+        'storageLocation': 'FREEZER',
+      });
+    } else if (t.contains('cá hồi') || t.contains('lohi') || t.contains('salmon') || t.contains('uunilohi')) {
       items.add({
         'id': 'fb_ca_hoi',
         'name': 'Lườn cá hồi tươi (Fillet / Lohi)',
@@ -896,8 +934,17 @@ class RecipeIngredientParser {
       });
     }
 
-    // 2. Phân tích Gia vị / Sốt / Rau nêm đặc trưng
-    if (t.contains('chanh') || t.contains('bơ') || t.contains('thì là')) {
+    // 2. Phân tích Mứt / Quả mọng / Sốt nêm đặc biệt từ Tên Món
+    if (t.contains('mứt') || t.contains('nam việt quất') || t.contains('lingonberry') || t.contains('puolukka') || t.contains('việt quất')) {
+      items.add({
+        'id': 'fb_mut_nam_viet_quat',
+        'name': 'Mứt nam việt quất Phần Lan (Puolukkahillo)',
+        'rawQty': 0.5 * factor,
+        'unit': 'hũ',
+        'aisle': 'Bánh mì & Mứt',
+        'storageLocation': 'PANTRY',
+      });
+    } else if (t.contains('chanh') || t.contains('bơ') || t.contains('thì là')) {
       items.add({
         'id': 'fb_chanh_bo_thi_la',
         'name': 'Chanh vàng, Bơ lạt & Thì là tươi',
@@ -927,7 +974,7 @@ class RecipeIngredientParser {
     }
 
     // 3. Phân tích Tinh bột / Rau củ ăn kèm
-    if (t.contains('khoai') || t.contains('nướng lò') || t.contains('uunilohi')) {
+    if (t.contains('khoai') || t.contains('nướng lò') || t.contains('uunilohi') || t.contains('poron')) {
       items.add({
         'id': 'fb_khoai_tay',
         'name': 'Khoai tây củ / Măng tây tươi',

@@ -536,6 +536,15 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
   List<String> _getCookingStepsForRecipe(String title) {
     final t = title.toLowerCase();
 
+    if (t.contains('poronkäristys') || t.contains('poronkaristys') || t.contains('tuần lộc') || (t.contains('bò') && t.contains('mứt'))) {
+      return [
+        'Bước 1: Thái thịt bò / thịt tuần lộc tươi (Poronkäristys) thành lát thật mỏng (dạng bào mỏng).',
+        'Bước 2: Cho bơ lạt vào chảo nóng, phi thơm hành tây củ rồi cho thịt vào xào nhanh trên lửa lớn.',
+        'Bước 3: Nêm muối tiêu đập dập, rưới chút nước hầm ninh nhỏ lửa 5-8 phút cho thịt mềm mọng.',
+        'Bước 4: Bày thịt xào ra đĩa ăn kèm khoai tây nghiền mịn (Muusi) và 1 muỗng mứt nam việt quất (Puolukkahillo) chuẩn vị Phần Lan.',
+      ];
+    }
+
     if (t.contains('uunilohi') || (t.contains('cá hồi') && t.contains('nướng'))) {
       return [
         'Bước 1: Rửa sạch lườn cá hồi tươi (Lohifilee), thấm khô và đặt lên khay nướng có lót giấy nướng.',
