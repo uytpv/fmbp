@@ -28,14 +28,14 @@ class AIGatewayService {
 
 
   /// Gợi ý thực đơn dựa trên ngân sách tuần và nguyên liệu trong tủ lạnh
-  Future<Map<String, dynamic>> suggestMenu({
+  Future<Map<String, dynamic>?> suggestMenu({
     required int weeklyBudget,
     required List<PantryItem> pantryItems,
   }) async {
     try {
       final itemsJson = pantryItems
           .map((item) => <String, dynamic>{
-                'name': item.ingredientId, // Tạm thời dùng ID nguyên liệu làm tên
+                'name': item.ingredientId,
                 'quantity': item.quantity,
                 'unit': item.unit,
               })
@@ -49,9 +49,10 @@ class AIGatewayService {
         },
       );
 
-      return response.data as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>?;
     } catch (e) {
-      rethrow;
+      debugPrint('AIGatewayService suggestMenu notice: $e');
+      return null;
     }
   }
 

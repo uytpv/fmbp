@@ -46,16 +46,17 @@ class MealPlanState extends _$MealPlanState {
       throw Exception('Vui lòng hoàn thành thiết lập ngân sách trước khi lập thực đơn');
     }
 
-    Map<String, dynamic> aiResult;
+    Map<String, dynamic>? aiResult;
     try {
       aiResult = await aiService.suggestMenu(
         weeklyBudget: budget.allocatedAmount,
         pantryItems: pantry,
       );
     } catch (e) {
-      // Fallback thực đơn tiết kiệm chuẩn vị khi máy chủ AI offline/503
-      aiResult = _generateFallbackMenu(budget.allocatedAmount, pantry, complexity: complexity);
+      aiResult = null;
     }
+
+    aiResult ??= _generateFallbackMenu(budget.allocatedAmount, pantry, complexity: complexity);
 
     final rawMenu = (aiResult['menu'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
 
