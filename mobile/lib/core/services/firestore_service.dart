@@ -238,7 +238,6 @@ class FirestoreService {
         .doc(familyId)
         .collection('meal_plans')
         .where('status', isEqualTo: 'ACTIVE')
-        .limit(1)
         .snapshots()
         .map((snap) {
       if (snap.docs.isEmpty) return null;
@@ -248,6 +247,26 @@ class FirestoreService {
   }
 
   Future<void> saveMealPlan(String familyId, MealPlan plan) async {
+    // Nếu plan này có trạng thái ACTIVE, tự động lưu kho (ARCHIVED) các thực đơn ACTIVE cũ trong Firestore
+    if (plan.status == 'ACTIVE') {
+      final activePlans = await _db
+          .collection('families')
+          .doc(familyId)
+          .collection('meal_plans')
+          .where('status', isEqualTo: 'ACTIVE')
+          .get();
+
+      if (activePlans.docs.isNotEmpty) {
+        final batch = _db.batch();
+        for (final doc in activePlans.docs) {
+          if (doc.id != plan.id) {
+            batch.update(doc.reference, {'status': 'ARCHIVED'});
+          }
+        }
+        await batch.commit();
+      }
+    }
+
     await _db
         .collection('families')
         .doc(familyId)
