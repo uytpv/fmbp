@@ -7,8 +7,9 @@
     "source": "functions"
   },
   "hosting": {
-    "site": "fmpb",
+    "site": "fmbp",
     "public": "mobile/build/web",
+
 
     "ignore": [
       "firebase.json",
