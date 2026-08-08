@@ -21,8 +21,9 @@ void main() async {
     print('Firebase initialization notice: $e');
   }
 
-  // Cấu hình kết nối Firebase Emulator trong chế độ Debug
-  if (kDebugMode) {
+  // Cấu hình kết nối Firebase Emulator khi có cờ --dart-define=USE_EMULATOR=true
+  const bool useEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+  if (useEmulator) {
     final host = AppConfig.localHost;
     try {
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
@@ -32,6 +33,7 @@ void main() async {
       print('Error connecting to Firebase Emulators: $e');
     }
   }
+
 
   runApp(
     const ProviderScope(
