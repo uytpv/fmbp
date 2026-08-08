@@ -32,6 +32,9 @@ ehthumbs.db
 *.pem
 *.key
 *.crt
+mobile/lib/firebase_options.dart
+firebase/.firebaserc
+
 
 # ------------------------------------------------------------------------------
 # Node.js & Firebase Cloud Functions (functions/, web/, admin/, etc.)
