@@ -1,4 +1,4 @@
-package com.familymealbudgetplanner.fmbp
+package app.web.fmbp
 
 import io.flutter.embedding.android.FlutterActivity
 

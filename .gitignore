@@ -91,7 +91,9 @@ doc/api/
 *.g.dart
 
 # Mobile Native Artifacts
+**/android/app/google-services.json
 **/android/local.properties
+
 **/android/key.properties
 **/android/.gradle/
 **/android/app/build/
