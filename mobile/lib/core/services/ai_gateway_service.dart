@@ -32,6 +32,11 @@ class AIGatewayService {
     required int weeklyBudget,
     required List<PantryItem> pantryItems,
   }) async {
+    // Nếu ở chế độ Web Production mà chưa có AI Gateway server riêng, không gửi HTTP POST để tránh lỗi 404
+    if (_dio.options.baseUrl.isEmpty) {
+      return null;
+    }
+
     try {
       final itemsJson = pantryItems
           .map((item) => <String, dynamic>{
@@ -51,7 +56,6 @@ class AIGatewayService {
 
       return response.data as Map<String, dynamic>?;
     } catch (e) {
-      debugPrint('AIGatewayService suggestMenu notice: $e');
       return null;
     }
   }
