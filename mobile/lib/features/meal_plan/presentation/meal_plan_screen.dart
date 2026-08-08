@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fmbp_models/fmbp_models.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
@@ -26,7 +27,33 @@ class MealPlanScreen extends ConsumerStatefulWidget {
 class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
   var _isGenerating = false;
   String _selectedComplexity = 'BALANCED'; // FAST (<30p), BALANCED (30-60p), ELABORATE (>60p)
-  final Set<String> _selectedCuisines = {'VIETNAMESE', 'FINNISH'};
+  final Set<String> _selectedCuisines = {'VIETNAMESE'};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCuisinePreferences();
+  }
+
+  Future<void> _loadCuisinePreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedCuisines = prefs.getStringList('selected_cuisines');
+      if (savedCuisines != null && savedCuisines.isNotEmpty && mounted) {
+        setState(() {
+          _selectedCuisines.clear();
+          _selectedCuisines.addAll(savedCuisines);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveCuisinePreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('selected_cuisines', _selectedCuisines.toList());
+    } catch (_) {}
+  }
 
   Future<void> _generateAIPlan() async {
     setState(() => _isGenerating = true);
@@ -114,9 +141,16 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+            TextButton(
+              onPressed: () {
+                _saveCuisinePreferences();
+                Navigator.pop(ctx);
+              },
+              child: const Text('Đóng'),
+            ),
             ElevatedButton(
               onPressed: () {
+                _saveCuisinePreferences();
                 Navigator.pop(ctx);
                 _generateAIPlan();
               },
@@ -140,9 +174,13 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
           if (val == true) {
             _selectedCuisines.add(key);
           } else {
-            _selectedCuisines.remove(key);
+            // Đảm bảo phải chọn ít nhất 1 phong cách ẩm thực
+            if (_selectedCuisines.length > 1) {
+              _selectedCuisines.remove(key);
+            }
           }
         });
+        _saveCuisinePreferences();
         setState(() {});
       },
     );
