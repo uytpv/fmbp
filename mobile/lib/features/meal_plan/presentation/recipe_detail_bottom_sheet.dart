@@ -6,6 +6,7 @@ import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../../shared/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../core/utils/recipe_ingredient_parser.dart';
 import '../../pantry/presentation/pantry_provider.dart';
 
 class RecipeDetailBottomSheet extends ConsumerStatefulWidget {
@@ -446,10 +447,42 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
     required int memberCount,
     required List<PantryItem> pantryItems,
   }) {
+    final parsed = RecipeIngredientParser.parseMealPlanToShoppingList(
+      recipeTitles: [title],
+      memberCount: memberCount,
+      pantryItems: [], // Tải đầy đủ danh sách nguyên liệu của món ăn
+    );
+
+    if (parsed.isNotEmpty) {
+      return parsed.map((item) {
+        final name = item['name'] as String;
+        final unit = item['unit'] as String;
+        final rawQty = item['rawQty'] as double? ?? 1.0;
+        final bool inPantry = pantryItems.any((p) {
+          final pName = p.ingredientId.toLowerCase();
+          final searchName = name.toLowerCase();
+          return pName.contains(searchName) || searchName.contains(pName);
+        });
+
+        String formattedQty;
+        if (unit == 'g' || unit == 'ml') {
+          formattedQty = rawQty >= 1000 ? '${(rawQty / 1000).toStringAsFixed(1)}' : '${rawQty.toInt()}';
+        } else {
+          formattedQty = rawQty.truncateToDouble() == rawQty ? '${rawQty.toInt()}' : rawQty.toStringAsFixed(1);
+        }
+
+        return {
+          'name': name,
+          'quantity': formattedQty,
+          'unit': unit,
+          'inPantry': inPantry,
+        };
+      }).toList();
+    }
+
     final t = title.toLowerCase();
     final factor = memberCount <= 0 ? 1 : memberCount;
 
-    // Helper kiểm tra xem nguyên liệu có trong tủ lạnh hay không
     bool inPantryCheck(String searchKeyword) {
       final key = searchKeyword.toLowerCase();
       return pantryItems.any((p) {
@@ -459,714 +492,152 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
       });
     }
 
-    if (t.contains('sandwich') || t.contains('mứt dâu') || t.contains('bánh mì sandwich')) {
-      return [
-        {
-          'name': 'Bánh mì sandwich mềm',
-          'quantity': '${factor * 2}',
-          'unit': 'lát',
-          'inPantry': inPantryCheck('bánh mì') || inPantryCheck('sandwich') || inPantryCheck('bread'),
-        },
-        {
-          'name': 'Mứt dâu tây (Strawberry Jam / Lingonberry)',
-          'quantity': '1',
-          'unit': 'hũ',
-          'inPantry': inPantryCheck('mứt') || inPantryCheck('dâu') || inPantryCheck('jam'),
-        },
-        {
-          'name': 'Bơ lạt nướng (Unsalted Butter)',
-          'quantity': '${factor * 15}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bơ') || inPantryCheck('butter'),
-        },
-        {
-          'name': 'Sữa tươi nguyên chất',
-          'quantity': '${factor * 100}',
-          'unit': 'ml',
-          'inPantry': inPantryCheck('sữa') || inPantryCheck('milk'),
-        },
-      ];
-    }
-
-    if (t.contains('phở bò')) {
-      return [
-        {
-          'name': 'Thịt bò tái / nạm tươi',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bò') || inPantryCheck('beef'),
-        },
-        {
-          'name': 'Bánh phở tươi / khô',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('phở') || inPantryCheck('noodle'),
-        },
-        {
-          'name': 'Xương ống ninh nước dùng',
-          'quantity': '${factor * 200}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('xương'),
-        },
-        {
-          'name': 'Hành tây, gừng & bộ gia vị phở',
-          'quantity': '1',
-          'unit': 'bộ',
-          'inPantry': inPantryCheck('hành') || inPantryCheck('gừng'),
-        },
-      ];
-    }
-
-    if (t.contains('sườn kho') || t.contains('cơm sườn')) {
-      return [
-        {
-          'name': 'Sườn heo tươi ngon',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('sườn') || inPantryCheck('pork'),
-        },
-        {
-          'name': 'Trứng gà / Trứng cút',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-        {
-          'name': 'Gạo thơm Jasmine',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gạo') || inPantryCheck('rice'),
-        },
-        {
-          'name': 'Hành tỏi & nước màu kho',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('hành') || inPantryCheck('tỏi'),
-        },
-      ];
-    }
-
-    if (t.contains('canh chua cá hồi') || (t.contains('cá hồi') && t.contains('canh'))) {
-      return [
-        {
-          'name': 'Đầu / Lườn cá hồi tươi (Lohifilee)',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('cá') || inPantryCheck('cá hồi') || inPantryCheck('salmon') || inPantryCheck('lohi'),
-        },
-        {
-          'name': 'Cà chua & thơm/dứa',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('cà chua') || inPantryCheck('dứa') || inPantryCheck('thơm'),
-        },
-        {
-          'name': 'Rau muống / Cải bina (Spinach)',
-          'quantity': '1',
-          'unit': 'bó',
-          'inPantry': inPantryCheck('rau') || inPantryCheck('spinach') || inPantryCheck('cải'),
-        },
-        {
-          'name': 'Tỏi, ớt & ngò gai',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('tỏi') || inPantryCheck('ớt'),
-        },
-      ];
-    }
-
-    if (t.contains('thịt heo quay') || t.contains('canh cải băm')) {
-      return [
-        {
-          'name': 'Thịt ba chỉ heo quay',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('heo') || inPantryCheck('pork'),
-        },
-        {
-          'name': 'Cải bẹ xanh / Cải bina',
-          'quantity': '1',
-          'unit': 'bó',
-          'inPantry': inPantryCheck('cải') || inPantryCheck('rau') || inPantryCheck('spinach'),
-        },
-        {
-          'name': 'Thịt nạc băm nấu canh',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt băm') || inPantryCheck('thịt'),
-        },
-        {
-          'name': 'Gừng tươi & tỏi',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('gừng') || inPantryCheck('tỏi'),
-        },
-      ];
-    }
-
-    if (t.contains('cá kho tộ') || t.contains('khoai mỡ')) {
-      return [
-        {
-          'name': 'Cá tươi kho tộ (Cá lóc / Cá hồi)',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('cá') || inPantryCheck('lohi') || inPantryCheck('salmon'),
-        },
-        {
-          'name': 'Khoai mỡ / Khoai môn',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('khoai'),
-        },
-        {
-          'name': 'Thịt nạc băm',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('thịt băm'),
-        },
-        {
-          'name': 'Hành lá, ớt & nước mắm',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('hành') || inPantryCheck('nước mắm'),
-        },
-      ];
-    }
-
-    if (t.contains('cháo gà') || t.contains('hạt sen')) {
-      return [
-        {
-          'name': 'Thịt gà đùi / ức tươi',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gà') || inPantryCheck('chicken'),
-        },
-        {
-          'name': 'Gạo tẻ & gạo nếp',
-          'quantity': '${factor * 75}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gạo') || inPantryCheck('rice'),
-        },
-        {
-          'name': 'Hạt sen khô / tươi',
-          'quantity': '${factor * 25}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('hạt sen') || inPantryCheck('sen'),
-        },
-        {
-          'name': 'Hành lá, ngò rí & tiêu',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('hành') || inPantryCheck('tiêu'),
-        },
-      ];
-    }
-
-    if (t.contains('bún mọc') || t.contains('sườn chua')) {
-      return [
-        {
-          'name': 'Bún tươi / Bún khô',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bún') || inPantryCheck('noodle'),
-        },
-        {
-          'name': 'Sườn non heo',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('sườn') || inPantryCheck('pork'),
-        },
-        {
-          'name': 'Giò sống mọc nấm mèo',
-          'quantity': '${factor * 75}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('giò') || inPantryCheck('mọc') || inPantryCheck('thịt'),
-        },
-        {
-          'name': 'Cà chua & dọc mùng/dứa',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('cà chua') || inPantryCheck('dứa'),
-        },
-      ];
-    }
-
-    if (t.contains('tôm hấp') || t.contains('su su')) {
-      return [
-        {
-          'name': 'Tôm tươi ngon',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('tôm') || inPantryCheck('shrimp'),
-        },
-        {
-          'name': 'Nước dừa tươi',
-          'quantity': '1',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('dừa'),
-        },
-        {
-          'name': 'Su su tươi',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('su su') || inPantryCheck('rau'),
-        },
-        {
-          'name': 'Trứng gà',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-      ];
-    }
-
-    if (t.contains('bún riêu')) {
-      return [
-        {
-          'name': 'Bún tươi / Bún khô',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bún') || inPantryCheck('noodle'),
-        },
-        {
-          'name': 'Cua đồng xay / Gạch cua',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('cua'),
-        },
-        {
-          'name': 'Đậu phụ chiên giòn',
-          'quantity': '${factor * 1}',
-          'unit': 'miếng',
-          'inPantry': inPantryCheck('đậu phụ') || inPantryCheck('tofu'),
-        },
-        {
-          'name': 'Cà chua & rau sống',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('cà chua') || inPantryCheck('rau'),
-        },
-      ];
-    }
-
-    if (t.contains('bò xào') || t.contains('thiên lý')) {
-      return [
-        {
-          'name': 'Thịt bò phi lê',
-          'quantity': '${factor * 125}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bò') || inPantryCheck('beef'),
-        },
-        {
-          'name': 'Bông thiên lý / Bông hẹ',
-          'quantity': '${factor * 75}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thiên lý') || inPantryCheck('rau'),
-        },
-        {
-          'name': 'Bí đỏ nấu canh',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bí') || inPantryCheck('pumpkin'),
-        },
-        {
-          'name': 'Thịt băm & tỏi',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('tỏi'),
-        },
-      ];
-    }
-
-    if (t.contains('cá hồi nướng') || t.contains('bơ tỏi')) {
-      return [
-        {
-          'name': 'Lườn cá hồi tươi (Lohifilee)',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('cá') || inPantryCheck('cá hồi') || inPantryCheck('lohi') || inPantryCheck('salmon'),
-        },
-        {
-          'name': 'Bơ lạt & tỏi băm',
-          'quantity': '${factor * 25}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bơ') || inPantryCheck('tỏi'),
-        },
-        {
-          'name': 'Gạo thơm Jasmine',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gạo') || inPantryCheck('rice'),
-        },
-        {
-          'name': 'Súp lơ xanh (Broccoli)',
-          'quantity': '${factor * 75}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('súp lơ') || inPantryCheck('broccoli') || inPantryCheck('rau'),
-        },
-      ];
-    }
-
-    if (t.contains('hủ tiếu')) {
-      return [
-        {
-          'name': 'Hủ tiếu khô / tươi',
-          'quantity': '${factor * 125}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('hủ tiếu') || inPantryCheck('noodle'),
-        },
-        {
-          'name': 'Thịt heo & tôm tươi',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('tôm'),
-        },
-        {
-          'name': 'Trứng cút luộc',
-          'quantity': '${factor * 2}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-        {
-          'name': 'Cần tây & giá đỗ',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('giá') || inPantryCheck('rau'),
-        },
-      ];
-    }
-
-    if (t.contains('mực xào') || t.contains('sa tế')) {
-      return [
-        {
-          'name': 'Mực ống tươi ngon',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('mực') || inPantryCheck('squid'),
-        },
-        {
-          'name': 'Sa tế ớt & ớt chuông',
-          'quantity': '1',
-          'unit': 'hũ',
-          'inPantry': inPantryCheck('sa tế') || inPantryCheck('ớt'),
-        },
-        {
-          'name': 'Rau ngót / Cải bina',
-          'quantity': '1',
-          'unit': 'bó',
-          'inPantry': inPantryCheck('rau') || inPantryCheck('spinach'),
-        },
-        {
-          'name': 'Thịt nạc băm nấu canh',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('thịt băm'),
-        },
-      ];
-    }
-
-    if (t.contains('thịt kho tàu') || t.contains('thịt kho')) {
-      return [
-        {
-          'name': 'Thịt ba chỉ heo',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('thịt') || inPantryCheck('heo') || inPantryCheck('pork'),
-        },
-        {
-          'name': 'Trứng gà luộc',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-        {
-          'name': 'Nước dừa xiêm',
-          'quantity': '1',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('dừa'),
-        },
-        {
-          'name': 'Hành tỏi & ớt',
-          'quantity': '1',
-          'unit': 'ít',
-          'inPantry': inPantryCheck('hành') || inPantryCheck('tỏi'),
-        },
-      ];
-    }
-
-    if (t.contains('ốp la') || t.contains('pate')) {
-      return [
-        {
-          'name': 'Bánh mì baguette',
-          'quantity': '${factor * 1}',
-          'unit': 'ổ',
-          'inPantry': inPantryCheck('bánh mì') || inPantryCheck('bread'),
-        },
-        {
-          'name': 'Trứng gà tươi',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-        {
-          'name': 'Pate gan heo',
-          'quantity': '${factor * 25}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('pate'),
-        },
-        {
-          'name': 'Dưa leo & ngò rí',
-          'quantity': '1',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('dưa') || inPantryCheck('rau'),
-        },
-      ];
-    }
-
-    if (t.contains('lẩu thái')) {
-      return [
-        {
-          'name': 'Tôm, mực & cá viên',
-          'quantity': '${factor * 200}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('tôm') || inPantryCheck('mực') || inPantryCheck('cá'),
-        },
-        {
-          'name': 'Gói gia vị lẩu Thái',
-          'quantity': '1',
-          'unit': 'gói',
-          'inPantry': inPantryCheck('lẩu') || inPantryCheck('sa tế'),
-        },
-        {
-          'name': 'Nấm kim châm & rau muống',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('nấm') || inPantryCheck('rau'),
-        },
-        {
-          'name': 'Bún tươi / Mỳ gói',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bún') || inPantryCheck('mỳ') || inPantryCheck('noodle'),
-        },
-      ];
-    }
-
-    if (t.contains('cơm chiên')) {
-      return [
-        {
-          'name': 'Cơm nguội dẻo',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('cơm') || inPantryCheck('gạo') || inPantryCheck('rice'),
-        },
-        {
-          'name': 'Tôm & mực thái hạt lựu',
-          'quantity': '${factor * 75}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('tôm') || inPantryCheck('mực'),
-        },
-        {
-          'name': 'Trứng gà & đậu hà lan',
-          'quantity': '${factor * 1}',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('trứng') || inPantryCheck('egg'),
-        },
-        {
-          'name': 'Cà rốt & hành lá',
-          'quantity': '1',
-          'unit': 'củ',
-          'inPantry': inPantryCheck('cà rốt') || inPantryCheck('hành'),
-        },
-      ];
-    }
-
-    if (t.contains('bún bò')) {
-      return [
-        {
-          'name': 'Bún sợi to',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bún') || inPantryCheck('noodle'),
-        },
-        {
-          'name': 'Nạm bò & chả bắp',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('bò') || inPantryCheck('beef'),
-        },
-        {
-          'name': 'Huyết heo & mắm ruốc Huế',
-          'quantity': '${factor * 50}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('mắm') || inPantryCheck('huyết'),
-        },
-        {
-          'name': 'Sả củ & ớt sa tế',
-          'quantity': '2',
-          'unit': 'cây',
-          'inPantry': inPantryCheck('sả') || inPantryCheck('ớt'),
-        },
-      ];
-    }
-
-    if (t.contains('cơm gà')) {
-      return [
-        {
-          'name': 'Thịt gà luộc / hấp',
-          'quantity': '${factor * 150}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gà') || inPantryCheck('chicken'),
-        },
-        {
-          'name': 'Gạo nấu nước dùng gà',
-          'quantity': '${factor * 100}',
-          'unit': 'g',
-          'inPantry': inPantryCheck('gạo') || inPantryCheck('rice'),
-        },
-        {
-          'name': 'Nước chấm gừng tỏi',
-          'quantity': '1',
-          'unit': 'bát',
-          'inPantry': inPantryCheck('gừng') || inPantryCheck('tỏi'),
-        },
-        {
-          'name': 'Dưa leo & xà lách',
-          'quantity': '1',
-          'unit': 'quả',
-          'inPantry': inPantryCheck('dưa') || inPantryCheck('xà lách'),
-        },
-      ];
-    }
-
-    // Dynamic Generic Fallback extracted from dish name keywords
     List<Map<String, dynamic>> dynamicIngs = [];
 
-    if (t.contains('cá')) {
+    if (t.contains('cá hồi') || t.contains('lohi')) {
       dynamicIngs.add({
-        'name': 'Cá tươi ngon (Lohifilee / Cá thu)',
+        'name': 'Lườn cá hồi tươi (Lohifilee)',
         'quantity': '${factor * 150}',
         'unit': 'g',
-        'inPantry': inPantryCheck('cá') || inPantryCheck('lohi') || inPantryCheck('salmon'),
+        'inPantry': inPantryCheck('cá hồi') || inPantryCheck('lohi') || inPantryCheck('salmon'),
+      });
+      dynamicIngs.add({
+        'name': 'Kem tươi / Bơ lạt / Thì là',
+        'quantity': '${factor * 50}',
+        'unit': 'g',
+        'inPantry': inPantryCheck('kem') || inPantryCheck('bơ') || inPantryCheck('thì là'),
       });
     } else if (t.contains('gà')) {
       dynamicIngs.add({
-        'name': 'Thịt gà tươi',
+        'name': 'Thịt gà tươi nạc',
         'quantity': '${factor * 150}',
         'unit': 'g',
         'inPantry': inPantryCheck('gà') || inPantryCheck('chicken'),
       });
-    } else if (t.contains('bò')) {
+    } else if (t.contains('bò') || t.contains('steak')) {
       dynamicIngs.add({
-        'name': 'Thịt bò tươi',
+        'name': 'Thịt bò phi lê / Ribeye',
         'quantity': '${factor * 150}',
         'unit': 'g',
         'inPantry': inPantryCheck('bò') || inPantryCheck('beef'),
       });
-    } else if (t.contains('tôm')) {
-      dynamicIngs.add({
-        'name': 'Tôm tươi',
-        'quantity': '${factor * 150}',
-        'unit': 'g',
-        'inPantry': inPantryCheck('tôm') || inPantryCheck('shrimp'),
-      });
-    } else if (t.contains('bánh mì')) {
-      dynamicIngs.add({
-        'name': 'Bánh mì tươi',
-        'quantity': '${factor * 1}',
-        'unit': 'ổ',
-        'inPantry': inPantryCheck('bánh mì') || inPantryCheck('bread'),
-      });
     } else {
       dynamicIngs.add({
-        'name': 'Thịt ba chỉ / Nguyên liệu chính',
-        'quantity': '${factor * 150}',
-        'unit': 'g',
-        'inPantry': inPantryCheck('thịt') || inPantryCheck('pork'),
+        'name': 'Nguyên liệu chính cho $title',
+        'quantity': '${factor * 1}',
+        'unit': 'phần',
+        'inPantry': false,
       });
     }
-
-    dynamicIngs.addAll([
-      {
-        'name': 'Rau xanh kèm theo (Spinach / Cải)',
-        'quantity': '1',
-        'unit': 'bó',
-        'inPantry': inPantryCheck('rau') || inPantryCheck('cải') || inPantryCheck('spinach'),
-      },
-      {
-        'name': 'Gia vị hành tỏi',
-        'quantity': '1',
-        'unit': 'ít',
-        'inPantry': inPantryCheck('hành') || inPantryCheck('tỏi'),
-      },
-    ]);
 
     return dynamicIngs;
   }
 
   List<String> _getCookingStepsForRecipe(String title) {
     final t = title.toLowerCase();
+
+    if (t.contains('pannukakku') || t.contains('kếp')) {
+      return [
+        'Bước 1: Đánh tan trứng gà cùng sữa tươi (Maito), thêm bột làm bánh kếp và ít bơ lạt đánh mịn.',
+        'Bước 2: Đổ hỗn hợp vào khay nướng có lót giấy nướng lò ở 200°C trong 25-30 phút cho bánh phồng vàng.',
+        'Bước 3: Rút khay bánh ra khỏi lò, cắt thành từng miếng vuông hình chữ nhật vừa ăn.',
+        'Bước 4: Phết mứt việt quất / nam việt quất (Puolukkahillo) lên mặt bánh và thưởng thức khi còn ấm.',
+      ];
+    }
+
+    if (t.contains('lohikeitto') || (t.contains('súp') && t.contains('cá hồi'))) {
+      return [
+        'Bước 1: Thái lườn cá hồi tươi (Lohifilee) thành khối vuông 2-3cm, khoai tây (Peruna) thái hạt lựu.',
+        'Bước 2: Đun sôi nước dùng cá, cho khoai tây và hành tây vào ninh 10-12 phút cho khoai mềm.',
+        'Bước 3: Hạ nhỏ lửa, thả cá hồi vào rưới kem tươi Cooking Cream (Ruokakerma) khuấy nhẹ 5 phút.',
+        'Bước 4: Nêm muối, tiêu đen và rắc thật nhiều thì là tươi cắt nhỏ lên súp trước khi múc ra bát.',
+      ];
+    }
+
+    if (t.contains('kaurapuuro') || t.contains('cháo yến mạch')) {
+      return [
+        'Bước 1: Cho yến mạch cán dẹt (Kaurahiutale) và sữa tươi (Maito) vào nồi theo tỷ lệ 1:2.',
+        'Bước 2: Đun nhỏ lửa khuấy đều tay trong 5-7 phút đến khi cháo yến mạch nở sánh mịn.',
+        'Bước 3: Cho một chút muối bơ lạt vào khuấy đều cho cháo có vị béo ngậy tự nhiên.',
+        'Bước 4: Múc cháo ra bát, cho 1 muỗng mứt nam việt quất Lingonberry vào giữa bát và dùng nóng.',
+      ];
+    }
+
+    if (t.contains('lihapullat') || t.contains('thịt viên')) {
+      return [
+        'Bước 1: Trộn thịt bò & heo băm nhuyễn với vụn bánh mì, trứng gà, hành tây băm và tiêu.',
+        'Bước 2: Vo thịt thành những viên tròn nhỏ, chiên vàng đều các mặt trên chảo bơ lạt.',
+        'Bước 3: Rưới kem tươi Cooking Cream vào chảo thịt viên đun nhỏ lửa 8 phút cho sệt sốt kem.',
+        'Bước 4: Thưởng thức cùng khoai tây nghiền mịn và mứt nam việt quất (Puolukkahillo) chuẩn vị Phần Lan.',
+      ];
+    }
+
+    if (t.contains('karjalanpaisti') || t.contains('thịt hầm')) {
+      return [
+        'Bước 1: Thái thịt bò & heo thành khối lớn, ướp gia vị hầm, lá nguyệt quế và tiêu hạt.',
+        'Bước 2: Xếp thịt, cà rốt và hành tây vào nồi gốm nướng lò.',
+        'Bước 3: Đổ nước xâm xấp mặt thịt, đậy nắp nướng hầm chậm trong lò 160°C trong 2 - 2.5 giờ.',
+        'Bước 4: Thưởng thức thịt hầm mềm mượt tan trong miệng cùng khoai tây luộc và dưa chuột muối.',
+      ];
+    }
+
+    if (t.contains('spaghetti') || t.contains('bolognese') || t.contains('pasta')) {
+      return [
+        'Bước 1: Luộc mỳ Ý Spaghetti trong nước sôi có muối 8-10 phút cho chín tới (al dente).',
+        'Bước 2: Phi thơm tỏi băm, xào chín thịt bò băm rồi đổ sốt cà chua Ý Bolognese vào đun sệt.',
+        'Bước 3: Nêm lá húng tây nướng, tiêu đen và nêm vị vừa ăn.',
+        'Bước 4: Trộn mỳ Ý ra đĩa, rưới sốt bò băm lên trên và rắc phô mai Parmesan bào mịn.',
+      ];
+    }
+
+    if (t.contains('steak') || t.contains('ribeye') || t.contains('bít tết')) {
+      return [
+        'Bước 1: Thấm khô miếng thịt thăn bò Ribeye, rắc muối biển và tiêu đen đập dập 2 mặt.',
+        'Bước 2: Áp chảo thịt bò với dầu olive ở nhiệt độ cao 2-3 phút mỗi mặt cùng tỏi và bơ lạt.',
+        'Bước 3: Áp chảo măng tây tươi và khoai tây chiên ăn kèm.',
+        'Bước 4: Đặt thịt nghỉ 5 phút trước khi thái lát mỏng, rưới sốt tiêu đen và dùng nóng.',
+      ];
+    }
+
+    if (t.contains('salad') || t.contains('clean') || t.contains('healthy')) {
+      return [
+        'Bước 1: Ức gà áp chảo chín vàng hai mặt, thái lát mỏng vừa ăn.',
+        'Bước 2: Rửa sạch xà lách tươi và cắt đôi cà chua bi.',
+        'Bước 3: Trộn xà lách, cà chua bi và ức gà vào tô lớn.',
+        'Bước 4: Rưới sốt Caesar / Chanh Dây Healthy lên trên và trộn đều thưởng thức.',
+      ];
+    }
+
     if (t.contains('phở bò')) {
       return [
-        'Bước 1: Ninh xương ống lấy nước dùng trong 45 phút cùng gừng nướng, hành khô và bộ gia vị phở (hoa hồi, quế, thảo quả).',
+        'Bước 1: Ninh xương ống lấy nước dùng trong 45 phút cùng gừng nướng, hành khô và bộ gia vị phở.',
         'Bước 2: Sơ chế thịt bò tái thành từng lát mỏng. Chần sơ bánh phở qua nước sôi rồi xếp vào tô.',
         'Bước 3: Xếp thịt bò tái, hành lá, ngò rí lên mặt bánh phở.',
         'Bước 4: Chan nước dùng phở thật sôi vào tô cho thịt bò chín tái vừa tới. Dùng nóng kèm chanh, ớt.',
       ];
     }
-    if (t.contains('sandwich') || t.contains('mứt dâu')) {
-      return [
-        'Bước 1: Áo một lớp bơ lạt (Unsalted Butter) lên 2 mặt bánh mì sandwich.',
-        'Bước 2: Cho bánh mì vào chảo nướng nhẹ 1-2 phút cho vàng giòn thơm phức.',
-        'Bước 3: Phết đều mứt dâu tây (Lingonberry/Strawberry Jam) lên mặt bánh.',
-        'Bước 4: Kẹp bánh lại, cắt đôi hình tam giác và thưởng thức kèm 1 ly sữa tươi mát lạnh.',
-      ];
-    }
-    if (t.contains('canh chua cá hồi')) {
-      return [
-        'Bước 1: Rửa sạch lườn/đầu cá hồi với nước muối và gừng để khử mùi hôi.',
-        'Bước 2: Đun sôi nước, cho cà chua, dứa (thơm) cắt lát và gia vị canh chua vào nấu 5 phút.',
-        'Bước 3: Cho cá hồi vào nấu chín tới trong 7-10 phút (không đảo mạnh tránh nát cá).',
-        'Bước 4: Cho rau muống/cải bina, su su vào đun sôi bùng, nêm nước mắm thơm và ngò gai.',
-      ];
-    }
-    if (t.contains('sườn kho') || t.contains('thịt kho')) {
-      return [
-        'Bước 1: Sườn non/thịt ba chỉ rửa sạch, chần nước sôi 2 phút rồi vớt ra ráo.',
-        'Bước 2: Ướp thịt với nước mắm, đường kẹo đắng, hành tím băm và tiêu trong 15 phút.',
-        'Bước 3: Cho thịt vào nồi đảo săn, thêm nước dừa tươi xâm xấp mặt thịt, hạ nhỏ lửa đun 25 phút.',
-        'Bước 4: Cho trứng gà luộc đã bóc vỏ vào kho cùng cho thấm vị đến khi nước sệt lên màu cánh gián.',
-      ];
-    }
-    if (t.contains('tôm hấp dừa')) {
-      return [
-        'Bước 1: Tôm tươi rửa sạch, cắt bỏ râu và kiếm tôm.',
-        'Bước 2: Chặt quả dừa lấy nước, cho nước dừa vào nồi cùng ít cọng sả đập dập đun sôi.',
-        'Bước 3: Cho tôm vào hấp trong nước dừa 5-7 phút đến khi tôm chuyển màu đỏ cam bóng đẹp.',
-        'Bước 4: Xếp tôm quanh miệng quả dừa, chan ít nước dừa hấp lên và dùng nóng với muối tiêu chanh.',
-      ];
-    }
+
     return [
-      'Bước 1: Sơ chế các nguyên liệu sạch sẽ, thái miếng vừa ăn.',
-      'Bước 2: Tẩm ướp gia vị vừa ăn trong 10-15 phút.',
-      'Bước 3: Chế biến theo phương pháp xào/nấu/kho với lửa vừa đến khi chín tới.',
-      'Bước 4: Bày ra đĩa, trang trí rau thơm và thưởng thức cùng gia đình.',
+      'Bước 1: Sơ chế các nguyên liệu $title sạch sẽ, thái miếng vừa ăn.',
+      'Bước 2: Tẩm ướp gia vị bơ tỏi và nước sốt vừa ăn trong 10 phút.',
+      'Bước 3: Chế biến áp chảo / nướng lò / nấu súp ở nhiệt độ vừa cho nguyên liệu chín tới thơm ngon.',
+      'Bước 4: Bày món $title ra đĩa và thưởng thức cùng gia đình.',
     ];
   }
 
   String _getLocalTipForRecipe(String title) {
     final t = title.toLowerCase();
 
-    if (t.contains('sandwich') || t.contains('mứt dâu') || t.contains('bánh mì')) {
-      return 'Mẹo tại Châu Âu/Phần Lan: Bạn có thể dễ dàng mua bánh mì sandwich lúa mạch (Ruisleipä) và mứt dâu tây Lingonberry/Strawberry Jam tự nhiên tại các siêu thị Prisma hoặc K-Market.';
+    if (t.contains('pannukakku') || t.contains('kaurapuuro') || t.contains('lihapullat') || t.contains('ruisleipä')) {
+      return 'Mẹo tại Châu Âu/Phần Lan: Các nguyên liệu như yến mạch (Kaurahiutale), sữa tươi (Maito), mứt nam việt quất (Puolukkahillo) được bán phổ biến giá cực tốt tại K-Citymarket, Lidl hoặc Prisma.';
+    }
+
+    if (t.contains('lohikeitto') || t.contains('cá hồi') || t.contains('lohi')) {
+      return 'Mẹo tại Châu Âu/Phần Lan: Cá hồi (Lohi) ở Bắc Âu cực kỳ tươi ngon và giàu Omega-3. Bạn nên chọn file lườn cá hồi tươi tại quầy cá K-Citymarket hoặc Lidl.';
     }
 
     if (t.contains('phở') || t.contains('bún')) {
       return 'Mẹo tại Châu Âu/Phần Lan: Bánh phở khô, bún khô và bộ gia vị Phở/Bún Việt Nam chuẩn vị có bán sẵn tại các chợ Á Châu địa phương (như Aasia Market, Jiahe).';
-    }
-
-    if (t.contains('cá hồi') || t.contains('cá')) {
-      return 'Mẹo tại Châu Âu/Phần Lan: Cá hồi (Lohi) ở Bắc Âu cực kỳ tươi ngon và giá tốt. Bạn nên mua file lườn cá hồi tươi tại K-Citymarket hoặc Lidl.';
     }
 
     return 'Mẹo tại Châu Âu/Phần Lan: Có thể thay thế các loại rau nhiệt đới bằng rau bina tươi (Spinach), cải thìa hoặc xà lách mỡ địa phương tại siêu thị gần nhà.';
