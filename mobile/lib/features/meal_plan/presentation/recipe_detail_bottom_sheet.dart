@@ -608,6 +608,15 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
       ];
     }
 
+    if (t.contains('cơm gà') || t.contains('hải nam')) {
+      return [
+        'Bước 1: Thịt gà ta luộc chín cùng gừng đập dập và hành tây cho nước dùng ngọt lịm.',
+        'Bước 2: Vớt gà ra ngâm nước đá cho da giòn vàng, dùng mỡ gà xào sơ gạo thơm trước khi nấu.',
+        'Bước 3: Nấu cơm bằng chính nước dùng gà vừa luộc cho hạt cơm dẻo thơm ngậy màu vàng óng.',
+        'Bước 4: Chặt gà thành miếng vừa ăn, xếp ra đĩa cùng cơm dẻo, dưa leo và nước chấm gừng tỏi ớt.',
+      ];
+    }
+
     if (t.contains('phở bò')) {
       return [
         'Bước 1: Ninh xương ống lấy nước dùng trong 45 phút cùng gừng nướng, hành khô và bộ gia vị phở.',
