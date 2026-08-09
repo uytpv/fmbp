@@ -10,6 +10,7 @@ import '../../../shared/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/persistent_financial_header.dart';
+import '../../budget/presentation/budget_provider.dart';
 import '../../family/presentation/family_members_sheet.dart';
 import '../../shopping/presentation/shopping_provider.dart';
 import 'meal_plan_provider.dart';
@@ -29,10 +30,22 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
   String _selectedComplexity = 'BALANCED'; // FAST (<30p), BALANCED (30-60p), ELABORATE (>60p)
   final Set<String> _selectedCuisines = {'VIETNAMESE'};
 
+  late PageController _pageController;
+  int _selectedDayIndex = 0;
+  bool _hasInitializedPage = false;
+  String? _lastPlanId;
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     _loadCuisinePreferences();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCuisinePreferences() async {
@@ -256,7 +269,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                       if ((targetFamilyId == null || targetFamilyId.isEmpty) && user != null) {
                         targetFamilyId = await ref.read(firestoreServiceProvider).createFamilyGroup('Gia Đình Tôi', user.uid);
                       }
-                      if (targetFamilyId != null && mounted) {
+                      if (targetFamilyId != null && context.mounted) {
                         FamilyMembersSheet.show(context, targetFamilyId);
                       }
                     },
@@ -377,249 +390,120 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                         }
 
                         // Active Meal Plan UI
+                        final days = _extractDaysFromPlan(plan);
+                        final todayIndex = _findTodayIndex(days);
+
+                        if ((!_hasInitializedPage || _lastPlanId != plan.id) && days.isNotEmpty) {
+                          _lastPlanId = plan.id;
+                          _selectedDayIndex = todayIndex;
+                          _pageController = PageController(initialPage: _selectedDayIndex);
+                          _hasInitializedPage = true;
+                        }
+
+                        final budget = ref.watch(budgetStateProvider).value;
+                        final isLowBudget = (budget != null && budget.allocatedAmount < 70) ||
+                            (budget != null && budget.spentAmount >= budget.allocatedAmount * 0.85);
+
                         return ListView(
                           padding: const EdgeInsets.only(
                             left: AppSpacing.md,
                             right: AppSpacing.md,
-                            top: AppSpacing.md,
+                            top: AppSpacing.sm,
                             bottom: 80,
                           ),
                           children: [
-                            // Summary Banner
-                            AppCard(
-                              padding: const EdgeInsets.all(AppSpacing.md),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Thực Đơn Tuần Đang Áp Dụng',
-                                            style: theme.textTheme.bodySmall?.copyWith(color: theme.disabledColor),
-                                          ),
-                                          Text(
-                                            '${DateFormat('dd/MM').format(plan.startDate)} - ${DateFormat('dd/MM').format(plan.endDate)}',
-                                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          InkWell(
-                                            onTap: _copyPlanToNextWeek,
-                                            borderRadius: BorderRadius.circular(4),
-                                            child: Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: const [
-                                                  Icon(Icons.copy_rounded, size: 14, color: AppColors.primary),
-                                                  SizedBox(width: 4),
-                                                  Text('Sao chép tuần sau', style: TextStyle(fontSize: 11, color: AppColors.primary)),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary.withOpacity(0.12),
-                                              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                                            ),
-                                            child: Text(
-                                              'Hoạt Động',
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: AppColors.primary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 18),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Chi phí ước tính:',
-                                        style: theme.textTheme.bodyMedium,
-                                      ),
-                                      Text(
-                                        CurrencyFormatter.format(plan.totalEstimatedCost, activeCurrency),
-                                        style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-
-                            // AI Budget Warning & Feasibility Advice Banner
-                            Container(
-                              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                              padding: const EdgeInsets.all(AppSpacing.md),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                                border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 22),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          '💡 Phân Tích Ngân Sách AI & Chế Độ Tiết Kiệm',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Nếu ngân sách tuần quá thấp so với số người ăn, AI tự động kích hoạt Chế Độ Tiết Kiệm Cực Hạn (Survival Mode): lặp lại các nguyên liệu giá rẻ như Khoai tây nghiền, Yến mạch và Trứng để mua sỉ tối ưu ngân sách.',
-                                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, height: 1.4),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            // Compact Header
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Lịch Ăn Uống Trong Tuần',
+                                  'Lịch Ăn Theo Ngày',
                                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                InkWell(
-                                  onTap: _isGenerating ? null : _generateAIPlan,
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(Icons.refresh_rounded, size: 16, color: AppColors.primary),
-                                        SizedBox(width: 4),
-                                        Text('Đổi thực đơn', style: TextStyle(fontSize: 12, color: AppColors.primary)),
-                                      ],
-                                    ),
-                                  ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Ước tính: ${CurrencyFormatter.format(plan.totalEstimatedCost, activeCurrency)}',
+                                  style: theme.textTheme.bodySmall?.copyWith(color: theme.disabledColor, fontSize: 11),
                                 ),
                               ],
                             ),
                             const SizedBox(height: AppSpacing.xs),
 
-                            // Meal Days dynamically rendered from plan.items
-                            ...() {
-                              final items = plan.items ?? [];
-                              final List<String> days = [];
-                              for (final it in items) {
-                                final d = it['day'] as String?;
-                                if (d != null && !days.contains(d)) {
-                                  days.add(d);
-                                }
-                              }
-                              if (days.isEmpty) {
-                                days.addAll(List.generate(7, (index) {
-                                  final targetDate = DateTime.now().add(Duration(days: index));
-                                  final dateStr = DateFormat('dd/MM').format(targetDate);
-                                  if (index == 0) return 'Hôm nay ($dateStr)';
-                                  if (index == 1) return 'Ngày mai ($dateStr)';
-                                  switch (targetDate.weekday) {
-                                    case DateTime.monday: return 'Thứ Hai ($dateStr)';
-                                    case DateTime.tuesday: return 'Thứ Ba ($dateStr)';
-                                    case DateTime.wednesday: return 'Thứ Tư ($dateStr)';
-                                    case DateTime.thursday: return 'Thứ Năm ($dateStr)';
-                                    case DateTime.friday: return 'Thứ Sáu ($dateStr)';
-                                    case DateTime.saturday: return 'Thứ Bảy ($dateStr)';
-                                    case DateTime.sunday: return 'Chủ Nhật ($dateStr)';
-                                    default: return dateStr;
+                            // AI Budget Warning (ONLY displayed when budget is low / near limit)
+                            if (isLowBudget)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            '💡 Ngân Sách Hạn Chế: Chế Độ Tiết Kiệm Kích Hoạt',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.amber),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Thực đơn tự động ưu tiên nguyên liệu giá tốt (Khoai tây, Yến mạch, Trứng) để tối ưu chi phí đi chợ.',
+                                            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, height: 1.3),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            // Day Navigation Header
+                            _buildDayNavigationHeader(context, days, _selectedDayIndex, todayIndex, theme),
+                            const SizedBox(height: AppSpacing.xs),
+
+                            // Swipable Day Card PageView
+                            SizedBox(
+                              height: 230,
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: days.length,
+                                onPageChanged: (index) {
+                                  setState(() {
+                                    _selectedDayIndex = index;
+                                  });
+                                },
+                                itemBuilder: (context, index) {
+                                  final day = days[index];
+                                  final items = plan.items ?? [];
+                                  final dayItems = items.where((i) => i['day'] == day).toList();
+                                  Map<String, dynamic>? bfItem;
+                                  Map<String, dynamic>? luItem;
+                                  Map<String, dynamic>? dnItem;
+
+                                  for (final it in dayItems) {
+                                    final type = it['meal_type'] ?? it['mealType'];
+                                    if (type == 'BREAKFAST') bfItem = Map<String, dynamic>.from(it as Map);
+                                    if (type == 'LUNCH') luItem = Map<String, dynamic>.from(it as Map);
+                                    if (type == 'DINNER') dnItem = Map<String, dynamic>.from(it as Map);
                                   }
-                                }));
-                              }
 
-                              final List<Widget> dayCards = [];
-                              for (final day in days) {
-                                final dayItems = items.where((i) => i['day'] == day).toList();
-                                Map<String, dynamic>? bfItem;
-                                Map<String, dynamic>? luItem;
-                                Map<String, dynamic>? dnItem;
-
-                                for (final it in dayItems) {
-                                  final type = it['meal_type'] ?? it['mealType'];
-                                  if (type == 'BREAKFAST') bfItem = Map<String, dynamic>.from(it as Map);
-                                  if (type == 'LUNCH') luItem = Map<String, dynamic>.from(it as Map);
-                                  if (type == 'DINNER') dnItem = Map<String, dynamic>.from(it as Map);
-                                }
-
-                                dayCards.add(
-                                  _buildMealDayCard(context, day, bfItem, luItem, dnItem, activeCurrency),
-                                );
-                              }
-                              return dayCards;
-                            }(),
-
-                            // Cycle Next Week Action Card
-                            const SizedBox(height: AppSpacing.md),
-                            AppCard(
-                              color: AppColors.primary.withOpacity(0.06),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: const [
-                                      Icon(Icons.autorenew_rounded, color: AppColors.primary),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        '🔄 Vòng Lặp Tuần Tiếp Theo',
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Khi hoàn thành tuần ăn, hãy lên thực đơn tuần mới. AI sẽ quét toàn bộ thực phẩm còn thừa trong tủ lạnh để tối ưu chi phí đi chợ!',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          icon: const Icon(Icons.copy_rounded, size: 16),
-                                          label: const Text('Sao chép tuần này', style: TextStyle(fontSize: 11)),
-                                          onPressed: _copyPlanToNextWeek,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-                                          label: const Text('Tạo thực đơn tuần mới', style: TextStyle(fontSize: 11)),
-                                          onPressed: _generateAIPlan,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  return _buildMealDayCard(context, day, bfItem, luItem, dnItem, activeCurrency);
+                                },
                               ),
                             ),
-                            const SizedBox(height: 80),
+                            const SizedBox(height: AppSpacing.xs),
+
+                            // Page Indicator Dots
+                            _buildDayPageIndicator(days.length, _selectedDayIndex, todayIndex),
+
+                            const SizedBox(height: 120),
                           ],
                         );
                       },
@@ -651,34 +535,70 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                   ? null
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: InkWell(
-                          onTap: _generateChecklistAndGoShopping,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
-                              ],
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text(
-                                  '🛒 Tạo Danh Sách Mua Sắm & Đi Chợ ➔',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: isDark
+                                        ? AppColors.bgCardDark.withOpacity(0.95)
+                                        : Colors.white.withOpacity(0.95),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                    ),
+                                    side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                                  ),
+                                  icon: const Icon(Icons.copy_rounded, size: 14, color: AppColors.primary),
+                                  label: const Text('Sao chép tuần sau', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                  onPressed: _copyPlanToNextWeek,
                                 ),
-                              ],
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: isDark
+                                        ? AppColors.bgCardDark.withOpacity(0.95)
+                                        : Colors.white.withOpacity(0.95),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                    ),
+                                    side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                                  ),
+                                  icon: const Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.primary),
+                                  label: const Text('Tạo thực đơn mới', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                  onPressed: _isGenerating ? null : _generateAIPlan,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 46,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                                ),
+                                elevation: 4,
+                              ),
+                              icon: const Icon(Icons.shopping_cart_checkout_rounded, size: 18),
+                              label: const Text(
+                                'Tạo Danh Sách Mua Sắm & Đi Chợ ➔',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              onPressed: _generateChecklistAndGoShopping,
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
             );
@@ -776,11 +696,11 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                 ),
               ],
             ),
-            const Divider(height: 14),
+            const Divider(height: 16),
             _buildMealRow(context, Icons.wb_sunny_outlined, 'Sáng', bfName, dayName, bfCost, currency, mealItem: breakfastItem),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             _buildMealRow(context, Icons.wb_twilight, 'Trưa', luName, dayName, luCost, currency, mealItem: lunchItem),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             _buildMealRow(context, Icons.nights_stay_outlined, 'Tối', dnName, dayName, dnCost, currency, mealItem: dinnerItem),
           ],
         ),
@@ -801,30 +721,196 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     final theme = Theme.of(context);
     return InkWell(
       onTap: () => _openRecipeDetail(mealName, dayName, label, estCost, currency, mealItem: mealItem),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: theme.disabledColor),
-            const SizedBox(width: 8),
-            Text(
-              '$label: ',
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Icon(icon, size: 20, color: theme.disabledColor),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 mealName,
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
                   decoration: TextDecoration.underline,
                   decorationStyle: TextDecorationStyle.dotted,
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primary),
+            const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primary),
           ],
         ),
       ),
+    );
+  }
+
+  List<String> _extractDaysFromPlan(MealPlan plan) {
+    final items = plan.items ?? [];
+    final List<String> days = [];
+    for (final it in items) {
+      final d = it['day'] as String?;
+      if (d != null && !days.contains(d)) {
+        days.add(d);
+      }
+    }
+    if (days.isEmpty) {
+      days.addAll(List.generate(7, (index) {
+        final targetDate = DateTime.now().add(Duration(days: index));
+        final dateStr = DateFormat('dd/MM').format(targetDate);
+        if (index == 0) return 'Hôm nay ($dateStr)';
+        if (index == 1) return 'Ngày mai ($dateStr)';
+        switch (targetDate.weekday) {
+          case DateTime.monday: return 'Thứ Hai ($dateStr)';
+          case DateTime.tuesday: return 'Thứ Ba ($dateStr)';
+          case DateTime.wednesday: return 'Thứ Tư ($dateStr)';
+          case DateTime.thursday: return 'Thứ Năm ($dateStr)';
+          case DateTime.friday: return 'Thứ Sáu ($dateStr)';
+          case DateTime.saturday: return 'Thứ Bảy ($dateStr)';
+          case DateTime.sunday: return 'Chủ Nhật ($dateStr)';
+          default: return dateStr;
+        }
+      }));
+    }
+    return days;
+  }
+
+  int _findTodayIndex(List<String> days) {
+    final todayStr = DateFormat('dd/MM').format(DateTime.now());
+    for (int i = 0; i < days.length; i++) {
+      if (days[i].contains('Hôm nay') || days[i].contains(todayStr)) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  Widget _buildDayNavigationHeader(
+    BuildContext context,
+    List<String> days,
+    int currentIndex,
+    int todayIndex,
+    ThemeData theme,
+  ) {
+    final isToday = currentIndex == todayIndex;
+    final currentDayName = days.isNotEmpty && currentIndex < days.length ? days[currentIndex] : '';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.brightness == Brightness.dark ? AppColors.bgCardDark : AppColors.bgCardLight,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(
+          color: theme.brightness == Brightness.dark ? Colors.white12 : Colors.black12,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 28),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: 'Ngày trước',
+            onPressed: currentIndex > 0
+                ? () {
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                : null,
+          ),
+          Expanded(
+            child: Text(
+              currentDayName,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isToday)
+                InkWell(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      todayIndex,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.today_rounded, size: 14, color: AppColors.primary),
+                        SizedBox(width: 4),
+                        Text(
+                          'Hôm nay',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right_rounded, size: 28),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                tooltip: 'Ngày tiếp theo',
+                onPressed: currentIndex < days.length - 1
+                    ? () {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    : null,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayPageIndicator(int totalDays, int currentIndex, int todayIndex) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(totalDays, (index) {
+        final isSelected = index == currentIndex;
+        final isToday = index == todayIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isSelected ? 20 : (isToday ? 10 : 6),
+          height: 6,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary
+                : (isToday ? AppColors.primary.withOpacity(0.5) : Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
     );
   }
 }
