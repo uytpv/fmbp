@@ -56,13 +56,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // 2. Nếu đã đăng nhập, kiểm tra người dùng đã tham gia gia đình chưa khi ở màn Login/Register
       if (isLoggingIn || isRegistering) {
         try {
-          final userDoc = await ref.read(firestoreServiceProvider).watchUser(user.uid).first;
-          if (userDoc == null || userDoc.familyId == null) {
+          final firestore = ref.read(firestoreServiceProvider);
+          final userDoc = await firestore.getUserWithSelfHealing(user.uid, user.email ?? '');
+          if (userDoc == null || userDoc.familyId == null || userDoc.familyId!.isEmpty) {
             return '/onboarding';
           }
           return '/dashboard';
         } catch (_) {
-          return '/onboarding';
+          return '/dashboard'; // Fallback an toàn tới dashboard
         }
       }
 

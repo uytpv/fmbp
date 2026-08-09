@@ -73,8 +73,8 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể tạo thực đơn. Vui lòng hoàn tất cài đặt ngân sách!'),
+          SnackBar(
+            content: Text('Tạo thực đơn thất bại: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -186,7 +186,30 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     );
   }
 
-  void _openRecipeDetail(String recipeTitle, String dayName, String mealType, num estimatedCost, String currency) {
+  void _openRecipeDetail(
+    String recipeTitle,
+    String dayName,
+    String mealType,
+    num estimatedCost,
+    String currency, {
+    Map<String, dynamic>? mealItem,
+  }) {
+    List<Map<String, dynamic>>? ings;
+    List<String>? steps;
+    String? localTip;
+
+    if (mealItem != null) {
+      if (mealItem['ingredients'] is List) {
+        ings = (mealItem['ingredients'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      if (mealItem['cooking_steps'] is List) {
+        steps = (mealItem['cooking_steps'] as List).map((e) => e.toString()).toList();
+      } else if (mealItem['cookingSteps'] is List) {
+        steps = (mealItem['cookingSteps'] as List).map((e) => e.toString()).toList();
+      }
+      localTip = mealItem['local_tip'] ?? mealItem['localTip'];
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -197,6 +220,9 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
         mealType: mealType,
         estimatedCost: estimatedCost,
         currency: currency,
+        ingredients: ings ?? const [],
+        cookingSteps: steps,
+        localTip: localTip,
       ),
     );
   }
@@ -438,6 +464,40 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                             ),
                             const SizedBox(height: AppSpacing.md),
 
+                            // AI Budget Warning & Feasibility Advice Banner
+                            Container(
+                              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 22),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          '💡 Phân Tích Ngân Sách AI & Chế Độ Tiết Kiệm',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Nếu ngân sách tuần quá thấp so với số người ăn, AI tự động kích hoạt Chế Độ Tiết Kiệm Cực Hạn (Survival Mode): lặp lại các nguyên liệu giá rẻ như Khoai tây nghiền, Yến mạch và Trứng để mua sỉ tối ưu ngân sách.',
+                                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, height: 1.4),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -467,36 +527,48 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                             // Meal Days dynamically rendered from plan.items
                             ...() {
                               final items = plan.items ?? [];
-                              final days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
-                              if (items.isEmpty) {
-                                return [
-                                  _buildMockMealDayCard(context, 'Thứ Hai', 'Bánh mì sandwich mứt dâu', 'Cơm sườn kho trứng', 'Canh chua cá hồi & rau muống xào', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Thứ Ba', 'Phở bò Hà Nội', 'Thịt heo quay & canh cải băm', 'Cá kho tộ & canh khoai mỡ', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Thứ Tư', 'Cháo gà hạt sen', 'Bún mọc sườn chua', 'Tôm hấp dừa & su su xào trứng', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Thứ Năm', 'Bún riêu cua', 'Bò xào thiên lý & canh bí đỏ', 'Cơm cá hồi nướng bơ tỏi', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Thứ Sáu', 'Hủ tiếu Nam Vang', 'Mực xào sa tế & canh rau ngót', 'Thịt kho tàu & trứng luộc', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Thứ Bảy', 'Bánh mì ốp la pate', 'Lẩu thái hải sản gia đình', 'Cơm chiên hải sản', activeCurrency),
-                                  _buildMockMealDayCard(context, 'Chủ Nhật', 'Bún bò Huế', 'Cơm gà Hải Nam', 'Canh sườn hầm củ quả', activeCurrency),
-                                ];
+                              final List<String> days = [];
+                              for (final it in items) {
+                                final d = it['day'] as String?;
+                                if (d != null && !days.contains(d)) {
+                                  days.add(d);
+                                }
+                              }
+                              if (days.isEmpty) {
+                                days.addAll(List.generate(7, (index) {
+                                  final targetDate = DateTime.now().add(Duration(days: index));
+                                  final dateStr = DateFormat('dd/MM').format(targetDate);
+                                  if (index == 0) return 'Hôm nay ($dateStr)';
+                                  if (index == 1) return 'Ngày mai ($dateStr)';
+                                  switch (targetDate.weekday) {
+                                    case DateTime.monday: return 'Thứ Hai ($dateStr)';
+                                    case DateTime.tuesday: return 'Thứ Ba ($dateStr)';
+                                    case DateTime.wednesday: return 'Thứ Tư ($dateStr)';
+                                    case DateTime.thursday: return 'Thứ Năm ($dateStr)';
+                                    case DateTime.friday: return 'Thứ Sáu ($dateStr)';
+                                    case DateTime.saturday: return 'Thứ Bảy ($dateStr)';
+                                    case DateTime.sunday: return 'Chủ Nhật ($dateStr)';
+                                    default: return dateStr;
+                                  }
+                                }));
                               }
 
                               final List<Widget> dayCards = [];
                               for (final day in days) {
                                 final dayItems = items.where((i) => i['day'] == day).toList();
-                                String bf = 'Bánh mì sandwich';
-                                String lu = 'Cơm sườn kho trứng';
-                                String dn = 'Canh chua cá hồi';
+                                Map<String, dynamic>? bfItem;
+                                Map<String, dynamic>? luItem;
+                                Map<String, dynamic>? dnItem;
 
                                 for (final it in dayItems) {
                                   final type = it['meal_type'] ?? it['mealType'];
-                                  final title = it['recipe_title'] ?? it['recipeTitle'] ?? it['title'] ?? '';
-                                  if (type == 'BREAKFAST') bf = title;
-                                  if (type == 'LUNCH') lu = title;
-                                  if (type == 'DINNER') dn = title;
+                                  if (type == 'BREAKFAST') bfItem = Map<String, dynamic>.from(it as Map);
+                                  if (type == 'LUNCH') luItem = Map<String, dynamic>.from(it as Map);
+                                  if (type == 'DINNER') dnItem = Map<String, dynamic>.from(it as Map);
                                 }
 
                                 dayCards.add(
-                                  _buildMockMealDayCard(context, day, bf, lu, dn, activeCurrency),
+                                  _buildMealDayCard(context, day, bfItem, luItem, dnItem, activeCurrency),
                                 );
                               }
                               return dayCards;
@@ -665,15 +737,23 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     );
   }
 
-  Widget _buildMockMealDayCard(
+  Widget _buildMealDayCard(
     BuildContext context,
     String dayName,
-    String breakfast,
-    String lunch,
-    String dinner,
+    Map<String, dynamic>? breakfastItem,
+    Map<String, dynamic>? lunchItem,
+    Map<String, dynamic>? dinnerItem,
     String currency,
   ) {
     final theme = Theme.of(context);
+    final bfName = breakfastItem?['recipe_title'] ?? breakfastItem?['recipeTitle'] ?? breakfastItem?['title'] ?? 'Bánh mì sandwich';
+    final luName = lunchItem?['recipe_title'] ?? lunchItem?['recipeTitle'] ?? lunchItem?['title'] ?? 'Cơm sườn kho trứng';
+    final dnName = dinnerItem?['recipe_title'] ?? dinnerItem?['recipeTitle'] ?? dinnerItem?['title'] ?? 'Canh chua cá hồi';
+
+    final bfCost = (breakfastItem?['estimated_cost'] as num?) ?? 5;
+    final luCost = (lunchItem?['estimated_cost'] as num?) ?? 10;
+    final dnCost = (dinnerItem?['estimated_cost'] as num?) ?? 12;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: AppCard(
@@ -697,11 +777,11 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
               ],
             ),
             const Divider(height: 14),
-            _buildMealRow(context, Icons.wb_sunny_outlined, 'Sáng', breakfast, dayName, 5, currency),
+            _buildMealRow(context, Icons.wb_sunny_outlined, 'Sáng', bfName, dayName, bfCost, currency, mealItem: breakfastItem),
             const SizedBox(height: 6),
-            _buildMealRow(context, Icons.wb_twilight, 'Trưa', lunch, dayName, 10, currency),
+            _buildMealRow(context, Icons.wb_twilight, 'Trưa', luName, dayName, luCost, currency, mealItem: lunchItem),
             const SizedBox(height: 6),
-            _buildMealRow(context, Icons.nights_stay_outlined, 'Tối', dinner, dayName, 12, currency),
+            _buildMealRow(context, Icons.nights_stay_outlined, 'Tối', dnName, dayName, dnCost, currency, mealItem: dinnerItem),
           ],
         ),
       ),
@@ -715,11 +795,12 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     String mealName,
     String dayName,
     num estCost,
-    String currency,
-  ) {
+    String currency, {
+    Map<String, dynamic>? mealItem,
+  }) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () => _openRecipeDetail(mealName, dayName, label, estCost, currency),
+      onTap: () => _openRecipeDetail(mealName, dayName, label, estCost, currency, mealItem: mealItem),
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),

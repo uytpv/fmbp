@@ -835,6 +835,8 @@ class RecipeIngredientParser {
 
       resultList.add({
         ...item,
+        'quantity': rawQty,
+        'rawQty': rawQty,
         'qty': formattedQty,
         'inPantry': inPantry,
       });

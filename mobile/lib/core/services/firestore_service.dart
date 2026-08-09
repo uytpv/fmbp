@@ -49,13 +49,112 @@ class FirestoreService {
   /// Đảm bảo User Document luôn tồn tại trong Firestore (tạo mới nếu chưa có, hoặc merge nếu đã có)
   Future<void> ensureUserDocument(String userId, String email, {String? displayName}) async {
     final userRef = _db.collection('users').doc(userId);
-    await userRef.set({
+    final snap = await userRef.get();
+
+    String? existingFamilyId;
+    if (snap.exists) {
+      final data = snap.data()!;
+      existingFamilyId = data['familyId'] as String? ?? data['family_id'] as String?;
+    }
+
+    if ((existingFamilyId == null || existingFamilyId.isEmpty) && email.isNotEmpty) {
+      final query = await _db.collection('users').where('email', isEqualTo: email).limit(5).get();
+      for (final doc in query.docs) {
+        final d = doc.data();
+        final fId = d['familyId'] as String? ?? d['family_id'] as String?;
+        if (fId != null && fId.isNotEmpty) {
+          existingFamilyId = fId;
+          break;
+        }
+      }
+    }
+
+    final dataToSet = <String, dynamic>{
       'id': userId,
       'email': email,
       'display_name': displayName ?? (email.isNotEmpty ? email.split('@')[0] : 'User'),
-      'role': 'MEMBER',
       'created_at': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    if (existingFamilyId != null && existingFamilyId.isNotEmpty) {
+      dataToSet['family_id'] = existingFamilyId;
+      dataToSet['familyId'] = existingFamilyId;
+      dataToSet['role'] = 'OWNER';
+    } else {
+      dataToSet['role'] = 'MEMBER';
+    }
+
+    await userRef.set(dataToSet, SetOptions(merge: true));
+  }
+
+  Future<User?> getUserWithSelfHealing(String userId, String email) async {
+    final snap = await _db.collection('users').doc(userId).get();
+    String? familyId;
+    String userEmail = email;
+    String displayName = email.isNotEmpty ? email.split('@')[0] : 'User';
+    String role = 'MEMBER';
+
+    if (snap.exists) {
+      final data = snap.data()!;
+      familyId = data['familyId'] as String? ?? data['family_id'] as String?;
+      userEmail = data['email'] as String? ?? email;
+      displayName = data['displayName'] as String? ?? data['display_name'] as String? ?? displayName;
+      role = data['role'] as String? ?? 'MEMBER';
+    }
+
+    if (familyId != null && familyId.isNotEmpty) {
+      return User(
+        id: userId,
+        familyId: familyId,
+        email: userEmail,
+        displayName: displayName,
+        role: role,
+      );
+    }
+
+    if (userEmail.isNotEmpty) {
+      final userQuery = await _db.collection('users').where('email', isEqualTo: userEmail).limit(5).get();
+      for (final doc in userQuery.docs) {
+        final d = doc.data();
+        final fId = d['familyId'] as String? ?? d['family_id'] as String?;
+        if (fId != null && fId.isNotEmpty) {
+          familyId = fId;
+          role = d['role'] as String? ?? 'OWNER';
+          break;
+        }
+      }
+
+      if (familyId == null || familyId.isEmpty) {
+        final familyQuery = await _db.collection('families').where('ownerId', isEqualTo: userId).limit(1).get();
+        if (familyQuery.docs.isNotEmpty) {
+          familyId = familyQuery.docs.first.id;
+          role = 'OWNER';
+        }
+      }
+    }
+
+    if (familyId != null && familyId.isNotEmpty) {
+      await _db.collection('users').doc(userId).set({
+        'id': userId,
+        'email': userEmail,
+        'display_name': displayName,
+        'family_id': familyId,
+        'familyId': familyId,
+        'role': role,
+      }, SetOptions(merge: true));
+
+      return User(
+        id: userId,
+        familyId: familyId,
+        email: userEmail,
+        displayName: displayName,
+        role: role,
+      );
+    }
+
+    return snap.exists
+        ? User(id: userId, familyId: familyId, email: userEmail, displayName: displayName, role: role)
+        : null;
   }
 
   Future<void> updateUserFamily(String userId, String? familyId, String role) async {

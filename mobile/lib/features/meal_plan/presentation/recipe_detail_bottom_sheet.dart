@@ -16,9 +16,10 @@ class RecipeDetailBottomSheet extends ConsumerStatefulWidget {
   final num estimatedCost;
   final String currency;
   final List<Map<String, dynamic>> ingredients;
+  final List<String>? cookingSteps;
   final String prepTime;
   final String complexity;
-  final String localTip;
+  final String? localTip;
 
   const RecipeDetailBottomSheet({
     super.key,
@@ -28,9 +29,10 @@ class RecipeDetailBottomSheet extends ConsumerStatefulWidget {
     required this.estimatedCost,
     required this.currency,
     this.ingredients = const [],
+    this.cookingSteps,
     this.prepTime = '25 phút',
     this.complexity = '⚡ Nấu nhanh (< 30 phút)',
-    this.localTip = 'Mẹo tại Châu Âu/Phần Lan: Có thể thay thế rau củ nhiệt đới bằng rau bina tươi (Spinach) hoặc mứt dâu tây lingonberry tại siêu thị địa phương.',
+    this.localTip,
   });
 
   @override
@@ -281,7 +283,7 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
                                   ),
                                 ),
                                 Text(
-                                  '${ing['quantity']} ${ing['unit']}',
+                                  _formatIngredientQuantity(ing, memberCount),
                                   style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(width: 8),
@@ -442,6 +444,48 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
     );
   }
 
+  String _formatIngredientQuantity(Map<String, dynamic> ing, int memberCount) {
+    final unit = (ing['unit'] as String?) ?? 'phần';
+
+    num? qtyNum;
+    final qVal = ing['quantity'] ?? ing['rawQty'] ?? ing['qty'] ?? ing['amount'];
+
+    if (qVal != null) {
+      if (qVal is num) {
+        qtyNum = qVal;
+      } else if (qVal is String) {
+        final cleanStr = qVal.replaceAll(RegExp(r'[^0-9.]'), '');
+        if (cleanStr.isNotEmpty) {
+          qtyNum = double.tryParse(cleanStr);
+        }
+      }
+    }
+
+    if (qtyNum == null || qtyNum <= 0) {
+      final u = unit.toLowerCase();
+      if (u == 'g' || u == 'ml') {
+        qtyNum = memberCount * 150.0;
+      } else if (u == 'kg') {
+        qtyNum = memberCount * 0.15;
+      } else if (u == 'hũ' || u == 'chai' || u == 'gói' || u == 'bó' || u == 'hộp') {
+        qtyNum = memberCount > 2 ? 1.0 : 0.5;
+      } else {
+        qtyNum = memberCount * 1.0;
+      }
+    }
+
+    String formattedQty;
+    if (unit == 'g' || unit == 'ml') {
+      formattedQty = qtyNum >= 1000 ? '${(qtyNum / 1000).toStringAsFixed(1)} kg' : '${qtyNum.toInt()} $unit';
+    } else if (unit == 'kg') {
+      formattedQty = '${qtyNum.toStringAsFixed(1)} kg';
+    } else {
+      formattedQty = qtyNum.truncateToDouble() == qtyNum ? '${qtyNum.toInt()} $unit' : '${qtyNum.toStringAsFixed(1)} $unit';
+    }
+
+    return formattedQty;
+  }
+
   List<Map<String, dynamic>> _getIngredientsForRecipe(
     String title, {
     required int memberCount,
@@ -534,6 +578,9 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
   }
 
   List<String> _getCookingStepsForRecipe(String title) {
+    if (widget.cookingSteps != null && widget.cookingSteps!.isNotEmpty) {
+      return widget.cookingSteps!;
+    }
     final t = title.toLowerCase();
 
     if (t.contains('poronkäristys') || t.contains('poronkaristys') || t.contains('tuần lộc') || (t.contains('bò') && t.contains('mứt'))) {
@@ -688,6 +735,9 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
   }
 
   String _getLocalTipForRecipe(String title) {
+    if (widget.localTip != null && widget.localTip!.isNotEmpty) {
+      return widget.localTip!;
+    }
     final t = title.toLowerCase();
 
     if (t.contains('pannukakku') || t.contains('kaurapuuro') || t.contains('lihapullat') || t.contains('ruisleipä')) {

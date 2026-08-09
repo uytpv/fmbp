@@ -1,4 +1,5 @@
 import 'package:fmbp_models/fmbp_models.dart';
+import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/ai_gateway_service.dart';
@@ -6,6 +7,7 @@ import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../budget/presentation/budget_provider.dart';
 import '../../pantry/presentation/pantry_provider.dart';
+import '../../../core/utils/recipe_ingredient_parser.dart';
 
 part 'meal_plan_provider.g.dart';
 
@@ -34,22 +36,64 @@ class MealPlanState extends _$MealPlanState {
     final aiService = ref.read(aiGatewayServiceProvider);
     final firestore = ref.read(firestoreServiceProvider);
 
-    final budget = ref.read(budgetStateProvider).value;
-    final pantry = ref.read(pantryStateProvider).value ?? [];
     final currentUser = ref.read(firebaseAuthServiceProvider).currentUser;
     if (currentUser == null) {
       throw Exception('Người dùng chưa đăng nhập');
     }
 
-    final userDoc = await firestore.watchUser(currentUser.uid).first;
-    if (budget == null || userDoc == null || userDoc.familyId == null) {
-      throw Exception('Vui lòng hoàn thành thiết lập ngân sách trước khi lập thực đơn');
+    User? userDoc;
+    try {
+      userDoc = await firestore.getUser(currentUser.uid);
+    } catch (_) {}
+
+    if (userDoc == null) {
+      await firestore.ensureUserDocument(currentUser.uid, currentUser.email ?? '');
+      userDoc = await firestore.getUser(currentUser.uid);
     }
+
+    String? familyId = userDoc?.familyId;
+    if (familyId == null || familyId.isEmpty) {
+      familyId = await firestore.createFamilyGroup('Gia Đình Tôi', currentUser.uid);
+    }
+
+    var budget = ref.read(budgetStateProvider).value;
+    if (budget == null) {
+      final now = DateTime.now();
+      budget = BudgetPeriod(
+        id: const Uuid().v4(),
+        familyId: familyId,
+        startDate: now,
+        endDate: now.add(const Duration(days: 7)),
+        allocatedAmount: 100,
+        spentAmount: 0,
+      );
+      try {
+        await firestore.setBudget(familyId, budget);
+      } catch (_) {}
+    }
+
+    final pantry = ref.read(pantryStateProvider).value ?? [];
+
+    String currency = 'EUR';
+    try {
+      final familyGroup = await firestore.watchFamily(familyId).first.timeout(const Duration(seconds: 2));
+      if (familyGroup != null) {
+        currency = familyGroup.currency;
+      }
+    } catch (_) {}
+
+    const memberCount = 4;
+    const location = 'FI';
 
     Map<String, dynamic>? aiResult;
     try {
       aiResult = await aiService.suggestMenu(
         weeklyBudget: budget.allocatedAmount,
+        currency: currency,
+        location: location,
+        memberCount: memberCount,
+        cuisines: cuisines,
+        complexity: complexity,
         pantryItems: pantry,
       );
     } catch (e) {
@@ -66,17 +110,18 @@ class MealPlanState extends _$MealPlanState {
     final rawMenu = (aiResult['menu'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
 
     final planId = const Uuid().v4();
+    final now = DateTime.now();
     final mealPlan = MealPlan(
       id: planId,
-      familyId: userDoc.familyId!,
-      startDate: budget.startDate,
-      endDate: budget.endDate,
+      familyId: familyId,
+      startDate: now,
+      endDate: now.add(const Duration(days: 7)),
       totalEstimatedCost: (aiResult['total_estimated_cost'] as num?)?.toInt() ?? (budget.allocatedAmount * 0.85).toInt(),
       status: 'ACTIVE',
       items: rawMenu,
     );
 
-    await firestore.saveMealPlan(userDoc.familyId!, mealPlan);
+    await firestore.saveMealPlan(familyId, mealPlan);
   }
 
   Map<String, dynamic> _generateFallbackMenu(
@@ -85,7 +130,22 @@ class MealPlanState extends _$MealPlanState {
     String complexity = 'BALANCED',
     List<String> cuisines = const ['VIETNAMESE'],
   }) {
-    final days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+    final List<String> days = List.generate(7, (index) {
+      final targetDate = DateTime.now().add(Duration(days: index));
+      final dateStr = DateFormat('dd/MM').format(targetDate);
+      if (index == 0) return 'Hôm nay ($dateStr)';
+      if (index == 1) return 'Ngày mai ($dateStr)';
+      switch (targetDate.weekday) {
+        case DateTime.monday: return 'Thứ Hai ($dateStr)';
+        case DateTime.tuesday: return 'Thứ Ba ($dateStr)';
+        case DateTime.wednesday: return 'Thứ Tư ($dateStr)';
+        case DateTime.thursday: return 'Thứ Năm ($dateStr)';
+        case DateTime.friday: return 'Thứ Sáu ($dateStr)';
+        case DateTime.saturday: return 'Thứ Bảy ($dateStr)';
+        case DateTime.sunday: return 'Chủ Nhật ($dateStr)';
+        default: return dateStr;
+      }
+    });
 
     final Map<String, List<String>> breakfastPool = {
       'VIETNAMESE': [
@@ -203,37 +263,77 @@ class MealPlanState extends _$MealPlanState {
     if (activeLunches.isEmpty) activeLunches.addAll(lunchPool['VIETNAMESE']!);
     if (activeDinners.isEmpty) activeDinners.addAll(dinnerPool['VIETNAMESE']!);
 
-    activeBreakfasts.shuffle();
-    activeLunches.shuffle();
-    activeDinners.shuffle();
+    final bool isExtremeSurvival = weeklyBudget < 70;
+
+    if (isExtremeSurvival) {
+      activeBreakfasts.clear();
+      activeLunches.clear();
+      activeDinners.clear();
+
+      activeBreakfasts.addAll([
+        'Kaurapuuro (Cháo yến mạch Phần Lan quả mọng)',
+        'Bánh mì lúa mạch kẹp trứng luộc',
+        'Pannukakku (Bánh kếp nướng lò)',
+      ]);
+      activeLunches.addAll([
+        'Súp khoai tây nghiền & bơ tỏi (Muusi)',
+        'Cơm chiên trứng bắp cải tiết kiệm',
+        'Mỳ xào trứng & bắp cải thái sợi',
+      ]);
+      activeDinners.addAll([
+        'Muusi & Lihapullat (Khoai tây nghiền & thịt viên tiết kiệm)',
+        'Súp hầm khoai tây & cà rốt',
+        'Cơm bắp cải xào trứng & nước tương',
+      ]);
+    } else {
+      activeBreakfasts.shuffle();
+      activeLunches.shuffle();
+      activeDinners.shuffle();
+    }
+
+    final double dailyBudget = weeklyBudget / 7.0;
+    final num bfCost = double.parse((dailyBudget * 0.20).toStringAsFixed(2));
+    final num luCost = double.parse((dailyBudget * 0.35).toStringAsFixed(2));
+    final num dnCost = double.parse((dailyBudget * 0.45).toStringAsFixed(2));
 
     final List<Map<String, dynamic>> generatedMenu = [];
 
     for (int i = 0; i < days.length; i++) {
       final day = days[i];
+      final bfTitle = activeBreakfasts[i % activeBreakfasts.length];
+      final luTitle = activeLunches[i % activeLunches.length];
+      final dnTitle = activeDinners[i % activeDinners.length];
+
       generatedMenu.add({
         'day': day,
         'meal_type': 'BREAKFAST',
-        'recipe_title': activeBreakfasts[i % activeBreakfasts.length],
-        'estimated_cost': 25000 + (i * 1000 % 10000),
+        'recipe_title': bfTitle,
+        'estimated_cost': bfCost,
+        'ingredients': RecipeIngredientParser.parseMealPlanToShoppingList(recipeTitles: [bfTitle], memberCount: 4, pantryItems: []),
       });
       generatedMenu.add({
         'day': day,
         'meal_type': 'LUNCH',
-        'recipe_title': activeLunches[i % activeLunches.length],
-        'estimated_cost': 45000 + (i * 2000 % 15000),
+        'recipe_title': luTitle,
+        'estimated_cost': luCost,
+        'ingredients': RecipeIngredientParser.parseMealPlanToShoppingList(recipeTitles: [luTitle], memberCount: 4, pantryItems: []),
       });
       generatedMenu.add({
         'day': day,
         'meal_type': 'DINNER',
-        'recipe_title': activeDinners[i % activeDinners.length],
-        'estimated_cost': 55000 + (i * 3000 % 20000),
+        'recipe_title': dnTitle,
+        'estimated_cost': dnCost,
+        'ingredients': RecipeIngredientParser.parseMealPlanToShoppingList(recipeTitles: [dnTitle], memberCount: 4, pantryItems: []),
       });
     }
 
     return {
-      'total_estimated_cost': (weeklyBudget * 0.82).toInt(),
-      'advice': 'Thực đơn phong phú tự động cân bằng dinh dưỡng và tiết kiệm ngân sách.',
+      'budget_status': isExtremeSurvival ? 'SURVIVAL' : 'BALANCED',
+      'min_recommended_budget': 70,
+      'total_estimated_cost': (weeklyBudget * 0.85).toInt(),
+      'advice': isExtremeSurvival
+          ? '⚠️ CẢNH BÁO NGHÊM TRỌNG: Ngân sách €$weeklyBudget cho 4 người là quá thấp (Khuyến nghị tối thiểu €70/tuần). Thực đơn đã tự động chuyển sang Chế Độ Tiết Kiệm Cực Hạn bằng cách lặp lại Khoai tây, Yến mạch và Trứng để mua sỉ tối ưu chi phí.'
+          : 'Thực đơn phong phú tự động cân bằng dinh dưỡng và tiết kiệm ngân sách.',
       'menu': generatedMenu,
     };
   }

@@ -13,7 +13,7 @@ app.use(express.json());
 async function callGeminiFlash(prompt: string, systemInstruction?: string): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY || functions.config().gemini?.key || "";
   if (!apiKey) {
-    functions.logger.warn("GEMINI_API_KEY không được cấu hình. Sử dụng Fallback Rule Engine.");
+    functions.logger.warn("GEMINI_API_KEY không được cấu hình. Cần bổ sung API Key vào environment.");
     return null;
   }
 
@@ -56,6 +56,7 @@ interface IngredientItem {
   name: string;
   quantity: number;
   unit: string;
+  aisle?: string;
 }
 
 interface PantryItem {
@@ -64,33 +65,108 @@ interface PantryItem {
   unit: string;
 }
 
+interface HistoricalPriceItem {
+  name: string;
+  price: number;
+  unit: string;
+}
+
 // ------------------------------------------------------------------------------
 // API 1: /suggest-menu & /api/v1/ai/suggest-menu
 // ------------------------------------------------------------------------------
 const suggestMenuHandler = async (req: Request, res: Response) => {
-  const { weekly_budget, pantry_items } = req.body || {};
-  const budget = Number(weekly_budget) || 1000000;
+  const {
+    weekly_budget,
+    currency = "EUR",
+    location = "FI",
+    member_count = 4,
+    cuisines = ["VIETNAMESE"],
+    complexity = "BALANCED",
+    pantry_items = [],
+    historical_prices = [],
+    start_date,
+  } = req.body || {};
+
+  const budget = Number(weekly_budget) || 100;
+  const memberCount = Number(member_count) || 4;
   const items: PantryItem[] = Array.isArray(pantry_items) ? pantry_items : [];
+  const prices: HistoricalPriceItem[] = Array.isArray(historical_prices) ? historical_prices : [];
+  const cuisineList = Array.isArray(cuisines) ? cuisines.join(", ") : String(cuisines);
 
-  const systemPrompt = `Bạn là một trợ lý dinh dưỡng và tài chính gia đình thông minh. Nhiệm vụ của bạn là lập kế hoạch thực đơn ăn uống trong tuần dựa trên hạn mức ngân sách chi tiêu và các nguyên liệu hiện có trong tủ lạnh. Hãy đảm bảo tổng chi phí thực phẩm không vượt quá ngân sách tuần được cấp và ưu tiên sử dụng nguyên liệu trong tủ lạnh trước để tránh lãng phí. Bạn PHẢI trả về kết quả dưới dạng một JSON object duy nhất, tuân thủ chính xác cấu trúc sau:
+  const isEurUsd = ["EUR", "USD", "GBP"].includes(String(currency).toUpperCase());
+  const minWeeklyBudgetPerPerson = isEurUsd ? 17.5 : 175000; // ~2.5 EUR hoặc 25.000 VNĐ / người / ngày
+  const minRecommendedWeeklyBudget = minWeeklyBudgetPerPerson * memberCount;
+  const isExtremeSurvival = budget < minRecommendedWeeklyBudget;
 
+  const survivalInstruction = isExtremeSurvival
+    ? `\n⚠️ CẢNH BÁO NGHÊM TRỌNG VỀ NGÂN SÁCH: Ngân sách ${budget} ${currency} cho ${memberCount} người là CỰC HẠN (quá thấp so với mức tối thiểu ${minRecommendedWeeklyBudget} ${currency}).
+KÍCH HOẠT CHẾ ĐỘ TIẾT KIỆM CỰC HẠN (Extreme Survival Mode):
+- Bạn PHẢI thiết lập thực đơn tập trung lặp lại các món ăn và nguyên liệu cực rẻ (Yến mạch, khoai tây nghiền, trứng, cơm chiên, bắp cải, đậu hũ) để mua sỉ tối ưu ngân sách. Không chọn các món đắt tiền như cá hồi, bò băm hay hải sản.
+- Trường "budget_status" PHẢI là "SURVIVAL".
+- Lời khuyên ("advice") PHẢI ghi rõ cảnh báo: "Ngân sách ${budget} ${currency} chỉ đạt ${(budget / memberCount / 7).toFixed(2)} ${currency}/người/ngày (Dưới mức tối thiểu khuyến nghị ${minRecommendedWeeklyBudget} ${currency}). Thực đơn đã được tối ưu dạng Tiết Kiệm Cực Hạn bằng cách lặp lại nguyên liệu giá rẻ."`
+    : `\nTrường "budget_status" PHẢI là "BALANCED".`;
+
+  const startDateStr = start_date ? String(start_date) : "Hôm nay";
+
+  const systemPrompt = `Bạn là Chuyên gia Dinh dưỡng và Tài chính gia đình AI toàn cầu.
+Nhiệm vụ của bạn là tạo kế hoạch thực đơn 21 bữa ăn cho 7 NGÀY LIÊN TIẾP CUỐN CHIẾU tính từ ${startDateStr} (3 bữa/ngày: BREAKFAST, LUNCH, DINNER) phù hợp chính xác với thông tin người dùng.
+
+YÊU CẦU BẮT BUỘC:
+1. Trường "day" cho 7 ngày trong mảng "menu" PHẢI theo đúng thứ tự ngày cuốn chiếu 7 ngày tính từ ${startDateStr} (Ví dụ: "Hôm nay (09/08)", "Ngày mai (10/08)", "Thứ Ba (11/08)", "Thứ Tư (12/08)", "Thứ Năm (13/08)", "Thứ Sáu (14/08)", "Thứ Bảy (15/08)").
+2. PHẢI tuân thủ các phong cách ẩm thực được yêu cầu: ${cuisineList}.
+3. Độ phức tạp / thời gian chuẩn bị: ${complexity}.
+4. Quốc gia / Vị trí địa lý: ${location}. Tiền tệ: ${currency}.
+5. Ngân sách tuần: ${budget} ${currency} cho ${memberCount} người ăn. ${survivalInstruction}
+6. Ưu tiên tận dụng nguyên liệu trong tủ lạnh trước để tránh lãng phí.
+7. Mỗi bữa ăn PHẢI kèm theo danh sách chi tiết các nguyên liệu chính (tên, số lượng cho 1 người, đơn vị, phân loại gian hàng siêu thị) và 4 bước hướng dẫn nấu ăn chuẩn vị.
+
+CẤU TRÚC KẾT QUẢ BẮT BUỘC TRẢ VỀ CHUẨN JSON:
 {
+  "budget_status": "${isExtremeSurvival ? "SURVIVAL" : "BALANCED"}",
+  "min_recommended_budget": ${minRecommendedWeeklyBudget},
   "menu": [
-    {"day": "Thứ Hai", "meal_type": "BREAKFAST", "recipe_title": "Phở gà", "estimated_cost": 30000, "reason": "Tiết kiệm chi phí"},
-    {"day": "Thứ Hai", "meal_type": "LUNCH", "recipe_title": "Thịt kho trứng", "estimated_cost": 50000, "reason": "Tận dụng tủ lạnh"},
-    {"day": "Thứ Hai", "meal_type": "DINNER", "recipe_title": "Canh rau muống", "estimated_cost": 20000, "reason": "Cân bằng dinh dưỡng"}
+    {
+      "day": "Hôm nay (09/08)",
+      "meal_type": "BREAKFAST",
+      "recipe_title": "Tên món ăn",
+      "estimated_cost": 2.5,
+      "ingredients": [
+        {"name": "Thực phẩm A", "quantity": 150, "unit": "g", "aisle": "Thịt & Hải sản"},
+        {"name": "Rau B", "quantity": 1, "unit": "bó", "aisle": "Rau củ quả"}
+      ],
+      "cooking_steps": [
+        "Bước 1...",
+        "Bước 2...",
+        "Bước 3...",
+        "Bước 4..."
+      ],
+      "local_tip": "Mẹo mua sắm tại siêu thị địa phương"
+    }
   ],
-  "total_estimated_cost": 450000,
-  "advice": "Lời khuyên chi tiêu tuần từ trợ lý AI"
-}
-
-Hãy tạo đầy đủ cho cả 7 ngày (từ Thứ Hai đến Chủ Nhật) với 3 bữa/ngày (BREAKFAST, LUNCH, DINNER).`;
+  "total_estimated_cost": ${budget * 0.85},
+  "advice": "Lời khuyên chi tiêu từ trợ lý AI"
+}`;
 
   const pantryStr = items.length > 0
     ? items.map((i) => `- ${i.name}: ${i.quantity} ${i.unit}`).join("\n")
     : "Tủ lạnh trống.";
 
-  const prompt = `Ngân sách ăn uống tuần này: ${budget} VNĐ.\nNguyên liệu trong tủ lạnh:\n${pantryStr}\n\nHãy gợi ý thực đơn tuần tối ưu nhất.`;
+  const priceStr = prices.length > 0
+    ? prices.map((p) => `- ${p.name}: ${p.price} ${currency}/${p.unit}`).join("\n")
+    : "Chưa có lịch sử giá.";
+
+  const prompt = `Hãy lập thực đơn 7 ngày cuốn chiếu tính từ ${startDateStr} cho gia đình ${memberCount} người tại ${location}.
+Ngân sách: ${budget} ${currency}. (Mức tối thiểu khuyến nghị: ${minRecommendedWeeklyBudget} ${currency}).
+Phong cách ẩm thực yêu cầu: ${cuisineList}.
+Mức độ nấu nướng: ${complexity}.
+
+Nguyên liệu có sẵn trong tủ lạnh:
+${pantryStr}
+
+Lịch sử giá thực tế người dùng đã mua gần đây:
+${priceStr}
+
+Tạo thực đơn 21 bữa hoàn chỉnh theo chuẩn JSON.`;
 
   const aiResult = await callGeminiFlash(prompt, systemPrompt);
   if (aiResult) {
@@ -100,95 +176,36 @@ Hãy tạo đầy đủ cho cả 7 ngày (từ Thứ Hai đến Chủ Nhật) v�
     }
   }
 
-  // Fallback Rule-based Menu nếu AI không phản hồi
-  const days = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
-  const sampleMeals = [
-    { title: "Bún bò Huế / Bún riêu", cost: 35000, type: "BREAKFAST" },
-    { title: "Thịt kho tàu & Canh cải", cost: 60000, type: "LUNCH" },
-    { title: "Cá sốt cà chua & Rau luộc", cost: 50000, type: "DINNER" },
-  ];
-
-  const generatedMenu = days.flatMap((day) =>
-    sampleMeals.map((m) => ({
-      day,
-      meal_type: m.type,
-      recipe_title: `${m.title} (${day})`,
-      estimated_cost: m.cost,
-      reason: items.length > 0 ? "Tận dụng nguyên liệu sẵn có trong tủ lạnh" : "Thực đơn dinh dưỡng cân bằng",
-    }))
-  );
-
-  return res.json({
-    menu: generatedMenu,
-    total_estimated_cost: Math.min(budget, 1015000),
-    advice: "Đã tạo thực đơn tuần cân bằng chi phí và dinh dưỡng cho gia đình bạn.",
-  });
+  return res.status(500).json({ error: "Không thể nhận phản hồi từ AI. Vui lòng thử lại." });
 };
 
 // ------------------------------------------------------------------------------
-// API 2: /estimate-cost & /api/v1/ai/estimate-cost
-// ------------------------------------------------------------------------------
-const estimateCostHandler = async (req: Request, res: Response) => {
-  const { recipe_title, ingredients } = req.body || {};
-  const title = String(recipe_title || "Món ăn gia đình");
-  const ingList: IngredientItem[] = Array.isArray(ingredients) ? ingredients : [];
-
-  const systemPrompt = `Bạn là chuyên gia định giá thực phẩm tại Việt Nam. Hãy phân tích các nguyên liệu trong công thức và đưa ra ước tính chi phí thực tế cho từng nguyên liệu và tổng chi phí món ăn bằng VNĐ. Trả về kết quả dưới dạng JSON object duy nhất theo cấu trúc sau:
-
-{
-  "estimated_cost": 120000,
-  "breakdown": [
-    {"ingredient_name": "Thịt ba chỉ", "estimated_price": 70000},
-    {"ingredient_name": "Gia vị", "estimated_price": 10000}
-  ]
-}`;
-
-  const ingStr = ingList.map((i) => `- ${i.name}: ${i.quantity} ${i.unit}`).join("\n");
-  const prompt = `Món ăn: ${title}\nNguyên liệu:\n${ingStr || "Nguyên liệu cơ bản"}`;
-
-  const aiResult = await callGeminiFlash(prompt, systemPrompt);
-  if (aiResult) {
-    const parsed = parseJsonFromText(aiResult);
-    if (parsed) {
-      return res.json(parsed);
-    }
-  }
-
-  // Fallback Rule-based Cost
-  const defaultCostPerItem = 25000;
-  const breakdown = ingList.map((i) => ({
-    ingredient_name: i.name,
-    estimated_price: defaultCostPerItem,
-  }));
-  const totalCost = breakdown.reduce((sum, b) => sum + b.estimated_price, 30000);
-
-  return res.json({
-    estimated_cost: totalCost,
-    breakdown: breakdown.length > 0 ? breakdown : [{ ingredient_name: title, estimated_price: totalCost }],
-  });
-};
-
-// ------------------------------------------------------------------------------
-// API 3: /parse-recipe & /api/v1/ai/parse-recipe
+// API 2: /parse-recipe & /api/v1/ai/parse-recipe
 // ------------------------------------------------------------------------------
 const parseRecipeHandler = async (req: Request, res: Response) => {
-  const { url_or_text } = req.body || {};
-  const text = String(url_or_text || "");
+  const { recipe_title, location = "FI", currency = "EUR" } = req.body || {};
+  const title = String(recipe_title || "Món ăn gia đình");
 
-  const systemPrompt = `Bạn là trợ lý nấu nướng thông minh. Hãy bóc tách và phân loại thông tin từ tài liệu/đường dẫn công thức nấu ăn được cung cấp. Lấy tiêu đề, thời gian chuẩn bị (phút), thời gian nấu (phút), số phần ăn, danh sách nguyên liệu và các bước thực hiện. Trả về JSON duy nhất:
+  const systemPrompt = `Bạn là Đầu bếp AI chuyên nghiệp. Hãy cung cấp công thức chi tiết cho món ăn được yêu cầu tại quốc gia ${location}.
+Trả về JSON duy nhất theo cấu trúc:
 
 {
-  "title": "Tên món ăn",
-  "instructions": ["Bước 1...", "Bước 2..."],
-  "servings": 4,
-  "prep_time": 15,
-  "cook_time": 30,
+  "recipe_title": "${title}",
+  "estimated_cost": 3.5,
+  "currency": "${currency}",
   "ingredients": [
-    {"name": "Thịt ba chỉ", "quantity": 0.5, "unit": "kg"}
-  ]
+    {"name": "Tên nguyên liệu", "quantity": 150, "unit": "g", "aisle": "Phân loại gian hàng"}
+  ],
+  "cooking_steps": [
+    "Bước 1...",
+    "Bước 2...",
+    "Bước 3...",
+    "Bước 4..."
+  ],
+  "local_tip": "Mẹo siêu thị địa phương tại ${location}"
 }`;
 
-  const prompt = `Nội dung/URL công thức:\n${text}`;
+  const prompt = `Cung cấp chi tiết nguyên liệu và các bước nấu cho món ăn: ${title} tại ${location}.`;
 
   const aiResult = await callGeminiFlash(prompt, systemPrompt);
   if (aiResult) {
@@ -198,32 +215,17 @@ const parseRecipeHandler = async (req: Request, res: Response) => {
     }
   }
 
-  // Fallback Rule
-  return res.json({
-    title: text.length < 30 ? text : "Món ăn bóc tách từ văn bản",
-    instructions: ["Chuẩn bị các nguyên liệu sạch sẽ", "Ướp gia vị trong 15 phút", "Nấu chín và thưởng thức khi còn nóng"],
-    servings: 4,
-    prep_time: 15,
-    cook_time: 25,
-    ingredients: [
-      { name: "Nguyên liệu chính", quantity: 0.5, unit: "kg" },
-      { name: "Gia vị nêm nếm", quantity: 1, unit: "gói" },
-    ],
-  });
+  return res.status(500).json({ error: "Không thể lấy chi tiết công thức từ AI." });
 };
 
-// Routing hỗ trợ cả đường dẫn ngắn và đường dẫn /api/v1/ai/...
+// Routing
 app.post("/suggest-menu", suggestMenuHandler);
 app.post("/api/v1/ai/suggest-menu", suggestMenuHandler);
-
-app.post("/estimate-cost", estimateCostHandler);
-app.post("/api/v1/ai/estimate-cost", estimateCostHandler);
-
 app.post("/parse-recipe", parseRecipeHandler);
 app.post("/api/v1/ai/parse-recipe", parseRecipeHandler);
 
 app.get("/", (req: Request, res: Response) => {
-  res.json({ status: "healthy", service: "Firebase FMBP AI Gateway", version: "1.0.0" });
+  res.json({ status: "healthy", service: "Firebase FMBP AI Gateway", version: "2.2.0" });
 });
 
 export const aiGateway = functions.https.onRequest(app);
