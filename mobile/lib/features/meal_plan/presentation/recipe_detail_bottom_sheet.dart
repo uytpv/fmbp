@@ -20,6 +20,7 @@ class RecipeDetailBottomSheet extends ConsumerStatefulWidget {
   final String prepTime;
   final String complexity;
   final String? localTip;
+  final VoidCallback? onSwapMeal;
 
   const RecipeDetailBottomSheet({
     super.key,
@@ -33,6 +34,7 @@ class RecipeDetailBottomSheet extends ConsumerStatefulWidget {
     this.prepTime = '25 phút',
     this.complexity = '⚡ Nấu nhanh (< 30 phút)',
     this.localTip,
+    this.onSwapMeal,
   });
 
   @override
@@ -126,13 +128,16 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
 
             final cookingSteps = _getCookingStepsForRecipe(widget.recipeTitle);
 
-            return Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.bgCardDark : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
-              ),
-              child: SingleChildScrollView(
+            return Center(
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 600),
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.bgCardDark : Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
+                ),
+                child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,13 +414,19 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
                     // COOK MEAL & DEDUCT PANTRY BUTTON
                     Row(
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Đóng'),
+                        if (widget.onSwapMeal != null) ...[
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                widget.onSwapMeal!();
+                              },
+                              icon: const Icon(Icons.sync_alt_rounded, size: 16),
+                              label: const Text('Đổi Món'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           flex: 2,
                           child: ElevatedButton.icon(
@@ -437,7 +448,8 @@ class _RecipeDetailBottomSheetState extends ConsumerState<RecipeDetailBottomShee
                   ],
                 ),
               ),
-            );
+            ),
+          );
           },
         );
       },

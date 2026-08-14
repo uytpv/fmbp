@@ -260,6 +260,70 @@ Trả về JSON duy nhất:
       return null;
     }
   }
+
+  /// Gợi ý 1 món ăn thay thế cho một bữa cụ thể
+  Future<Map<String, dynamic>?> suggestSingleMeal({
+    required String mealType,
+    required List<String> cuisines,
+    required String complexity,
+    required String currency,
+    required String location,
+    String? avoidTitle,
+    List<PantryItem> pantryItems = const [],
+  }) async {
+    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    if (apiKey.isEmpty) return null;
+
+    try {
+      final dio = Dio();
+      final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
+
+      final pantryNames = pantryItems.map((p) => p.ingredientId).join(', ');
+      final prompt = '''
+Bạn là Chuyên gia Dinh dưỡng AI. Hãy gợi ý DUY NHẤT 1 món ăn cho bữa $mealType phù hợp các tiêu chí:
+- Phong cách ẩm thực: ${cuisines.join(', ')}.
+- Độ phức tạp / thời gian: $complexity.
+- Vị trí: $location, Tiền tệ: $currency.
+- Nguyên liệu có sẵn trong tủ lạnh (ưu tiên tận dụng nếu có): $pantryNames.
+${avoidTitle != null ? '- TRÁNH hoặc KHÔNG TRÙNG với món cũ: "$avoidTitle".' : ''}
+
+Trả về JSON duy nhất:
+{
+  "recipe_title": "Tên món ăn mới",
+  "estimated_cost": 5.0,
+  "currency": "$currency",
+  "ingredients": [
+    {"name": "Tên nguyên liệu", "quantity": 150, "unit": "g", "aisle": "Gian hàng"}
+  ],
+  "cooking_steps": [
+    "Bước 1...", "Bước 2...", "Bước 3...", "Bước 4..."
+  ],
+  "local_tip": "Mẹo nấu hoặc mẹo siêu thị"
+}
+''';
+
+      final response = await dio.post(
+        url,
+        data: {
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'responseMimeType': 'application/json',
+          }
+        },
+      );
+
+      final text = response.data['candidates'][0]['content']['parts'][0]['text'] as String;
+      return jsonDecode(text) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 @riverpod

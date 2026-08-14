@@ -218,14 +218,74 @@ Trả về JSON duy nhất theo cấu trúc:
   return res.status(500).json({ error: "Không thể lấy chi tiết công thức từ AI." });
 };
 
+// ------------------------------------------------------------------------------
+// API 3: /suggest-single-meal & /api/v1/ai/suggest-single-meal
+// ------------------------------------------------------------------------------
+const suggestSingleMealHandler = async (req: Request, res: Response) => {
+  const {
+    meal_type = "DINNER",
+    cuisines = ["VIETNAMESE"],
+    complexity = "BALANCED",
+    currency = "EUR",
+    location = "FI",
+    avoid_title,
+    pantry_items = [],
+  } = req.body || {};
+
+  const cuisineList = Array.isArray(cuisines) ? cuisines.join(", ") : String(cuisines);
+  const pantryStr = Array.isArray(pantry_items) && pantry_items.length > 0
+    ? pantry_items.map((i: any) => `- ${i.name || i.ingredientId}: ${i.quantity} ${i.unit}`).join("\n")
+    : "Tủ lạnh trống.";
+
+  const systemPrompt = `Bạn là Chuyên gia Dinh dưỡng AI. Hãy gợi ý DUY NHẤT 1 món ăn cho bữa ${meal_type} phù hợp các tiêu chí:
+- Phong cách ẩm thực: ${cuisineList}.
+- Độ phức tạp / thời gian: ${complexity}.
+- Vị trí: ${location}, Tiền tệ: ${currency}.
+- Nguyên liệu có sẵn trong tủ lạnh (ưu tiên tận dụng nếu có):
+${pantryStr}
+${avoid_title ? `- TRÁNH hoặc KHÔNG TRÙNG với món: "${avoid_title}".` : ""}
+
+Trả về JSON duy nhất:
+{
+  "recipe_title": "Tên món ăn mới",
+  "estimated_cost": 5.0,
+  "currency": "${currency}",
+  "ingredients": [
+    {"name": "Tên nguyên liệu", "quantity": 150, "unit": "g", "aisle": "Phân loại gian hàng"}
+  ],
+  "cooking_steps": [
+    "Bước 1...",
+    "Bước 2...",
+    "Bước 3...",
+    "Bước 4..."
+  ],
+  "local_tip": "Mẹo siêu thị địa phương"
+}`;
+
+  const prompt = `Hãy gợi ý 1 món ăn mới cho bữa ${meal_type} chuẩn phong cách ${cuisineList} tại ${location}.`;
+
+  const aiResult = await callGeminiFlash(prompt, systemPrompt);
+  if (aiResult) {
+    const parsed = parseJsonFromText(aiResult);
+    if (parsed) {
+      return res.json(parsed);
+    }
+  }
+
+  return res.status(500).json({ error: "Không thể nhận gợi ý món ăn từ AI." });
+};
+
 // Routing
 app.post("/suggest-menu", suggestMenuHandler);
 app.post("/api/v1/ai/suggest-menu", suggestMenuHandler);
 app.post("/parse-recipe", parseRecipeHandler);
 app.post("/api/v1/ai/parse-recipe", parseRecipeHandler);
+app.post("/suggest-single-meal", suggestSingleMealHandler);
+app.post("/api/v1/ai/suggest-single-meal", suggestSingleMealHandler);
 
 app.get("/", (req: Request, res: Response) => {
-  res.json({ status: "healthy", service: "Firebase FMBP AI Gateway", version: "2.2.0" });
+  res.json({ status: "healthy", service: "Firebase FMBP AI Gateway", version: "2.3.0" });
 });
 
 export const aiGateway = functions.https.onRequest(app);
+

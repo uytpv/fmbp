@@ -325,8 +325,61 @@ class FirestoreService {
     });
   }
 
+  Future<List<Recipe>> searchRecipes({
+    String? query,
+    String? mealType,
+    String? cuisine,
+    int limit = 50,
+  }) async {
+    try {
+      Query q = _db.collection('recipes');
+      // Khi người dùng tìm kiếm theo từ khóa cụ thể, không giới hạn mealType để tìm được tất cả món ăn trong kho
+      if ((query == null || query.trim().isEmpty) && mealType != null && mealType != 'ANY') {
+        q = q.where('mealType', isEqualTo: mealType);
+      }
+      if (cuisine != null && cuisine.isNotEmpty && cuisine != 'ALL') {
+        q = q.where('cuisine', isEqualTo: cuisine);
+      }
+      final snap = await q.limit(limit * 2).get();
+      var list = snap.docs
+          .map((doc) => Recipe.fromJson({...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .toList();
+
+      if (query != null && query.trim().isNotEmpty) {
+        final qLower = query.trim().toLowerCase();
+        list = list.where((r) => r.title.toLowerCase().contains(qLower)).toList();
+      }
+
+      return list.take(limit).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Recipe>> getPopularRecipes({
+    String? mealType,
+    String? cuisine,
+    int limit = 30,
+  }) async {
+    try {
+      Query q = _db.collection('recipes').orderBy('usageCount', descending: true);
+      if (mealType != null && mealType != 'ANY') {
+        q = q.where('mealType', isEqualTo: mealType);
+      }
+      if (cuisine != null && cuisine.isNotEmpty && cuisine != 'ALL') {
+        q = q.where('cuisine', isEqualTo: cuisine);
+      }
+      final snap = await q.limit(limit).get();
+      return snap.docs
+          .map((doc) => Recipe.fromJson({...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<void> saveRecipe(Recipe recipe) async {
-    await _db.collection('recipes').doc(recipe.id).set(recipe.toJson());
+    await _db.collection('recipes').doc(recipe.id).set(recipe.toJson(), SetOptions(merge: true));
   }
 
   // ----------------- MEAL PLAN OPERATIONS -----------------
@@ -372,7 +425,100 @@ class FirestoreService {
         .collection('meal_plans')
         .doc(plan.id)
         .set(plan.toJson());
+
+    // Tự động lưu các món ăn mới vào kho Recipe toàn cầu (Community Cookbook)
+    if (plan.items != null && plan.items!.isNotEmpty) {
+      for (final item in plan.items!) {
+        final title = item['recipe_title'] ?? item['recipeTitle'] ?? item['title'];
+        if (title is String && title.trim().isNotEmpty) {
+          final recipeId = 'rec_${title.trim().toLowerCase().hashCode.abs()}';
+          try {
+            await _db.collection('recipes').doc(recipeId).set({
+              'id': recipeId,
+              'title': title.trim(),
+              'mealType': item['meal_type'] ?? item['mealType'] ?? 'ANY',
+              'estimatedCost': (item['estimated_cost'] as num?)?.toDouble() ?? 5.0,
+              'ingredients': item['ingredients'] ?? [],
+              'instructions': item['cooking_steps'] ?? item['cookingSteps'] ?? [],
+              'localTip': item['local_tip'] ?? item['localTip'],
+              'isPublic': true,
+              'creatorId': 'AI_SYSTEM',
+              'usageCount': FieldValue.increment(1),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          } catch (_) {}
+        }
+      }
+    }
   }
+
+  /// Cập nhật 1 món đơn lẻ trong thực đơn tuần mà không phải reload cả tuần
+  Future<void> updateSingleMealInPlan({
+    required String familyId,
+    required String mealPlanId,
+    required String day,
+    required String mealType,
+    required Map<String, dynamic> newMeal,
+  }) async {
+    final docRef = _db
+        .collection('families')
+        .doc(familyId)
+        .collection('meal_plans')
+        .doc(mealPlanId);
+
+    final snap = await docRef.get();
+    if (!snap.exists || snap.data() == null) return;
+
+    final data = snap.data()!;
+    final itemsList = (data['items'] as List?)
+            ?.map((e) => Map<String, dynamic>.from(e as Map))
+            .toList() ??
+        [];
+
+    final index = itemsList.indexWhere((it) {
+      final itDay = it['day'];
+      final itType = it['meal_type'] ?? it['mealType'];
+      return itDay == day && itType == mealType;
+    });
+
+    if (index != -1) {
+      itemsList[index] = newMeal;
+    } else {
+      itemsList.add(newMeal);
+    }
+
+    // Tính lại tổng chi phí ước tính
+    num totalCost = 0;
+    for (final it in itemsList) {
+      totalCost += (it['estimated_cost'] as num?) ?? 0;
+    }
+
+    await docRef.update({
+      'items': itemsList,
+      'totalEstimatedCost': totalCost.toInt(),
+    });
+
+    // Đồng thời lưu món mới vào kho recipes
+    final title = newMeal['recipe_title'] ?? newMeal['recipeTitle'] ?? newMeal['title'];
+    if (title is String && title.trim().isNotEmpty) {
+      final recipeId = 'rec_${title.trim().toLowerCase().hashCode.abs()}';
+      try {
+        await _db.collection('recipes').doc(recipeId).set({
+          'id': recipeId,
+          'title': title.trim(),
+          'mealType': mealType,
+          'estimatedCost': (newMeal['estimated_cost'] as num?)?.toDouble() ?? 5.0,
+          'ingredients': newMeal['ingredients'] ?? [],
+          'instructions': newMeal['cooking_steps'] ?? newMeal['cookingSteps'] ?? [],
+          'localTip': newMeal['local_tip'] ?? newMeal['localTip'],
+          'isPublic': true,
+          'usageCount': FieldValue.increment(1),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+    }
+  }
+
 
   // ----------------- SHOPPING LIST OPERATIONS -----------------
 

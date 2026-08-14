@@ -14,7 +14,9 @@ import '../../budget/presentation/budget_provider.dart';
 import '../../family/presentation/family_members_sheet.dart';
 import '../../shopping/presentation/shopping_provider.dart';
 import 'meal_plan_provider.dart';
+import 'meal_preference_sheet.dart';
 import 'recipe_detail_bottom_sheet.dart';
+import 'swap_meal_bottom_sheet.dart';
 
 class MealPlanScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onSelectTab;
@@ -27,8 +29,9 @@ class MealPlanScreen extends ConsumerStatefulWidget {
 
 class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
   var _isGenerating = false;
-  String _selectedComplexity = 'BALANCED'; // FAST (<30p), BALANCED (30-60p), ELABORATE (>60p)
+  String _selectedComplexity = 'BALANCED'; // FAST_15, FAST, BALANCED, ELABORATE
   final Set<String> _selectedCuisines = {'VIETNAMESE'};
+  List<String> _selectedDietaryTags = [];
 
   late PageController _pageController;
   int _selectedDayIndex = 0;
@@ -52,19 +55,23 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedCuisines = prefs.getStringList('selected_cuisines');
-      if (savedCuisines != null && savedCuisines.isNotEmpty && mounted) {
+      final savedComplexity = prefs.getString('selected_complexity');
+      final savedDietary = prefs.getStringList('selected_dietary_tags');
+
+      if (mounted) {
         setState(() {
-          _selectedCuisines.clear();
-          _selectedCuisines.addAll(savedCuisines);
+          if (savedCuisines != null && savedCuisines.isNotEmpty) {
+            _selectedCuisines.clear();
+            _selectedCuisines.addAll(savedCuisines);
+          }
+          if (savedComplexity != null && savedComplexity.isNotEmpty) {
+            _selectedComplexity = savedComplexity;
+          }
+          if (savedDietary != null) {
+            _selectedDietaryTags = savedDietary;
+          }
         });
       }
-    } catch (_) {}
-  }
-
-  Future<void> _saveCuisinePreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('selected_cuisines', _selectedCuisines.toList());
     } catch (_) {}
   }
 
@@ -134,67 +141,48 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     }
   }
 
-  void _showCuisinePreferencesDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Tùy Chọn Phong Cách Ẩm Thực'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Chọn một hoặc nhiều phong cách món ăn yêu thích của gia đình:', style: TextStyle(fontSize: 12)),
-              const SizedBox(height: 12),
-              _buildCuisineCheckbox('🇻🇳 Món Việt Nam', 'VIETNAMESE', setDialogState),
-              _buildCuisineCheckbox('🇫🇮 Món Bắc Âu (Phần Lan)', 'FINNISH', setDialogState),
-              _buildCuisineCheckbox('🇪🇺 Món Châu Âu (Pasta, Steak)', 'EUROPEAN', setDialogState),
-              _buildCuisineCheckbox('🇯🇵 Món Châu Á (Nhật, Hàn)', 'ASIAN', setDialogState),
-              _buildCuisineCheckbox('🥗 Món Clean / Healthy', 'HEALTHY', setDialogState),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _saveCuisinePreferences();
-                Navigator.pop(ctx);
-              },
-              child: const Text('Đóng'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _saveCuisinePreferences();
-                Navigator.pop(ctx);
-                _generateAIPlan();
-              },
-              child: const Text('Áp Dụng & Gợi Ý AI'),
-            ),
-          ],
-        ),
-      ),
+  void _showMealPreferenceSheet() {
+    MealPreferenceSheet.show(
+      context,
+      initialCuisines: _selectedCuisines.toList(),
+      initialComplexity: _selectedComplexity,
+      initialDietaryTags: _selectedDietaryTags,
+      onApply: (cuisines, complexity, dietaryTags, regenerateAI) {
+        setState(() {
+          _selectedCuisines.clear();
+          _selectedCuisines.addAll(cuisines);
+          _selectedComplexity = complexity;
+          _selectedDietaryTags = dietaryTags;
+        });
+        if (regenerateAI) {
+          _generateAIPlan();
+        }
+      },
     );
   }
 
-  Widget _buildCuisineCheckbox(String label, String key, StateSetter setDialogState) {
-    final isChecked = _selectedCuisines.contains(key);
-    return CheckboxListTile(
-      value: isChecked,
-      title: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-      dense: true,
-      activeColor: AppColors.primary,
-      onChanged: (val) {
-        setDialogState(() {
-          if (val == true) {
-            _selectedCuisines.add(key);
-          } else {
-            // Đảm bảo phải chọn ít nhất 1 phong cách ẩm thực
-            if (_selectedCuisines.length > 1) {
-              _selectedCuisines.remove(key);
-            }
-          }
-        });
-        _saveCuisinePreferences();
-        setState(() {});
+  void _openSwapMealSheet(
+    String dayName,
+    String mealTypeKey,
+    String currentMealTitle,
+    num currentCost,
+    String currency,
+  ) {
+    SwapMealBottomSheet.show(
+      context,
+      dayName: dayName,
+      mealType: mealTypeKey,
+      currentMealTitle: currentMealTitle,
+      currentEstimatedCost: currentCost,
+      currency: currency,
+      cuisines: _selectedCuisines.toList(),
+      complexity: _selectedComplexity,
+      onMealSwapped: (newMeal) async {
+        await ref.read(mealPlanStateProvider.notifier).swapMealItem(
+              day: dayName,
+              mealType: mealTypeKey,
+              newMeal: newMeal,
+            );
       },
     );
   }
@@ -203,6 +191,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     String recipeTitle,
     String dayName,
     String mealType,
+    String mealTypeKey,
     num estimatedCost,
     String currency, {
     Map<String, dynamic>? mealItem,
@@ -236,6 +225,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
         ingredients: ings ?? const [],
         cookingSteps: steps,
         localTip: localTip,
+        onSwapMeal: () => _openSwapMealSheet(dayName, mealTypeKey, recipeTitle, estimatedCost, currency),
       ),
     );
   }
@@ -275,9 +265,9 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.public_rounded),
-                    tooltip: 'Tùy chọn phong cách ẩm thực',
-                    onPressed: _showCuisinePreferencesDialog,
+                    icon: const Icon(Icons.tune_rounded),
+                    tooltip: 'Tùy chỉnh tiêu chí thực đơn & ẩm thực',
+                    onPressed: _showMealPreferenceSheet,
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh_rounded),
@@ -313,12 +303,12 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                                 ),
                                 const SizedBox(height: AppSpacing.md),
                                 Text(
-                                  'Lập Thực Đơn Tuần Dinh Dưỡng',
+                                  'Chưa Có Thực Đơn Tuần Này',
                                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: AppSpacing.xs),
                                 Text(
-                                  'Trợ lý AI sẽ gợi ý thực đơn dựa trên ngân sách, đồ trong tủ lạnh và tiêu chí cài đặt bên dưới.',
+                                  'AI sẽ thiết kế 21 bữa ăn dinh dưỡng đa quốc gia, chuẩn ngân sách & tận dụng tủ lạnh.',
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
@@ -326,50 +316,58 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                                 ),
                                 const SizedBox(height: AppSpacing.lg),
 
-                                // Thẻ Tiêu Chí Đầu Vào Nấu Ăn
-                                AppCard(
+                                // Quick Preferences Box
+                                Container(
                                   padding: const EdgeInsets.all(AppSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppColors.bgCardDark : Colors.white,
+                                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                    border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        children: const [
-                                          Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
-                                          SizedBox(width: 8),
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
                                           Text(
-                                            'Cấu Hình Tiêu Chí Nấu Ăn Đầu Vào',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                            'Tiêu chí ẩm thực & nấu nướng:',
+                                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                          ),
+                                          InkWell(
+                                            onTap: _showMealPreferenceSheet,
+                                            child: const Text(
+                                              'Tùy chỉnh chi tiết ⚙️',
+                                              style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
+                                            ),
                                           ),
                                         ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        '1. Chọn cấp độ & thời gian chuẩn bị:',
-                                        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                                       ),
                                       const SizedBox(height: 8),
                                       Row(
                                         children: [
-                                          Expanded(child: _buildComplexityOptionTile('⚡ Nấu Nhanh', '<30 phút', 'FAST')),
-                                          const SizedBox(width: 6),
-                                          Expanded(child: _buildComplexityOptionTile('🍲 Cân Bằng', '30-60 phút', 'BALANCED')),
-                                          const SizedBox(width: 6),
-                                          Expanded(child: _buildComplexityOptionTile('👑 Cầu Kỳ', '>60 phút', 'ELABORATE')),
+                                          Expanded(child: _buildComplexityOptionTile('⚡ Siêu Tốc', '<15p', 'FAST_15')),
+                                          const SizedBox(width: 4),
+                                          Expanded(child: _buildComplexityOptionTile('🍳 Nhanh', '<30p', 'FAST')),
+                                          const SizedBox(width: 4),
+                                          Expanded(child: _buildComplexityOptionTile('🍲 Cân Bằng', '30-60p', 'BALANCED')),
+                                          const SizedBox(width: 4),
+                                          Expanded(child: _buildComplexityOptionTile('👑 Cầu Kỳ', '>60p', 'ELABORATE')),
                                         ],
                                       ),
-                                      const SizedBox(height: 14),
+                                      const SizedBox(height: 12),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            '2. Phong cách ẩm thực:',
-                                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                                            'Phong cách: ${_selectedCuisines.length} ẩm thực',
+                                            style: TextStyle(fontSize: 12, color: theme.disabledColor),
                                           ),
                                           InkWell(
-                                            onTap: _showCuisinePreferencesDialog,
+                                            onTap: _showMealPreferenceSheet,
                                             child: Text(
-                                              'Tùy chỉnh (${_selectedCuisines.length}) ⚙️',
-                                              style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
+                                              'Thay đổi (${_selectedCuisines.join(', ')})',
+                                              style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                         ],
@@ -429,6 +427,10 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                             ),
                             const SizedBox(height: AppSpacing.xs),
 
+                            // Quick Preference Bar
+                            _buildActivePreferencesBar(theme, isDark),
+                            const SizedBox(height: AppSpacing.xs),
+
                             // AI Budget Warning (ONLY displayed when budget is low / near limit)
                             if (isLowBudget)
                               Container(
@@ -454,7 +456,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Thực đơn tự động ưu tiên nguyên liệu giá tốt (Khoai tây, Yến mạch, Trứng) để tối ưu chi phí đi chợ.',
+                                            'Thực đơn tự động ưu tiên nguyên liệu giá tốt để tối ưu chi phí đi chợ.',
                                             style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, height: 1.3),
                                           ),
                                         ],
@@ -470,7 +472,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
 
                             // Swipable Day Card PageView
                             SizedBox(
-                              height: 230,
+                              height: 245,
                               child: PageView.builder(
                                 controller: _pageController,
                                 itemCount: days.length,
@@ -508,24 +510,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                         );
                       },
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (err, st) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.error_outline, color: AppColors.error, size: 48),
-                              const SizedBox(height: 8),
-                              const Text('Tạm thời chưa có dữ liệu thực đơn'),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: _generateAIPlan,
-                                child: const Text('Tạo Thực Đơn Ngay'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      error: (err, stack) => Center(child: Text('Lỗi: $err')),
                     ),
                   ),
                 ],
@@ -605,6 +590,84 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildActivePreferencesBar(ThemeData theme, bool isDark) {
+    final cuisineCount = _selectedCuisines.length;
+    String complexityLabel = '30-60p';
+    if (_selectedComplexity == 'FAST_15') complexityLabel = '<15p';
+    if (_selectedComplexity == 'FAST') complexityLabel = '<30p';
+    if (_selectedComplexity == 'ELABORATE') complexityLabel = '>60p';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.bgCardDark : Colors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.tune_rounded, size: 16, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Ẩm thực ($cuisineCount)',
+                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    complexityLabel,
+                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.orange),
+                  ),
+                ),
+                if (_selectedDietaryTags.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      _selectedDietaryTags.first,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: _showMealPreferenceSheet,
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                'Tùy chỉnh ⚙️',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -691,17 +754,17 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                   ),
                 ),
                 Text(
-                  'Bấm món để xem chi tiết ➔',
+                  'Bấm món để xem • Icon 🔄 để đổi món',
                   style: TextStyle(fontSize: 10, color: theme.disabledColor),
                 ),
               ],
             ),
-            const Divider(height: 16),
-            _buildMealRow(context, Icons.wb_sunny_outlined, 'Sáng', bfName, dayName, bfCost, currency, mealItem: breakfastItem),
-            const SizedBox(height: 8),
-            _buildMealRow(context, Icons.wb_twilight, 'Trưa', luName, dayName, luCost, currency, mealItem: lunchItem),
-            const SizedBox(height: 8),
-            _buildMealRow(context, Icons.nights_stay_outlined, 'Tối', dnName, dayName, dnCost, currency, mealItem: dinnerItem),
+            const Divider(height: 14),
+            _buildMealRow(context, Icons.wb_sunny_outlined, 'Sáng', 'BREAKFAST', bfName, dayName, bfCost, currency, mealItem: breakfastItem),
+            const SizedBox(height: 6),
+            _buildMealRow(context, Icons.wb_twilight, 'Trưa', 'LUNCH', luName, dayName, luCost, currency, mealItem: lunchItem),
+            const SizedBox(height: 6),
+            _buildMealRow(context, Icons.nights_stay_outlined, 'Tối', 'DINNER', dnName, dayName, dnCost, currency, mealItem: dinnerItem),
           ],
         ),
       ),
@@ -712,6 +775,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
     BuildContext context,
     IconData icon,
     String label,
+    String mealTypeKey,
     String mealName,
     String dayName,
     num estCost,
@@ -720,24 +784,43 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
   }) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () => _openRecipeDetail(mealName, dayName, label, estCost, currency, mealItem: mealItem),
+      onTap: () => _openRecipeDetail(mealName, dayName, label, mealTypeKey, estCost, currency, mealItem: mealItem),
       borderRadius: BorderRadius.circular(6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: theme.disabledColor),
-            const SizedBox(width: 10),
+            Icon(icon, size: 18, color: theme.disabledColor),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.disabledColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: theme.disabledColor),
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 mealName,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontSize: 14.5,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
-                  decorationStyle: TextDecorationStyle.dotted,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.sync_alt_rounded, size: 17, color: AppColors.primary),
+              tooltip: 'Đổi món này',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: () => _openSwapMealSheet(dayName, mealTypeKey, mealName, estCost, currency),
             ),
             const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primary),
           ],

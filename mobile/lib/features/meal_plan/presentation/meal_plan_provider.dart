@@ -124,6 +124,39 @@ class MealPlanState extends _$MealPlanState {
     await firestore.saveMealPlan(familyId, mealPlan);
   }
 
+  /// Đổi một món đơn lẻ trong thực đơn tuần
+  Future<void> swapMealItem({
+    required String day,
+    required String mealType,
+    required Map<String, dynamic> newMeal,
+  }) async {
+    final firestore = ref.read(firestoreServiceProvider);
+    final currentUser = ref.read(firebaseAuthServiceProvider).currentUser;
+    if (currentUser == null) return;
+
+    final userDoc = await firestore.getUser(currentUser.uid);
+    final familyId = userDoc?.familyId;
+    if (familyId == null || familyId.isEmpty) return;
+
+    final currentPlan = state.value;
+    if (currentPlan == null) return;
+
+    // Đảm bảo món mới có trường day và meal_type đúng
+    final formattedMeal = Map<String, dynamic>.from(newMeal);
+    formattedMeal['day'] = day;
+    formattedMeal['meal_type'] = mealType;
+    formattedMeal['mealType'] = mealType;
+
+    await firestore.updateSingleMealInPlan(
+      familyId: familyId,
+      mealPlanId: currentPlan.id,
+      day: day,
+      mealType: mealType,
+      newMeal: formattedMeal,
+    );
+  }
+
+
   Map<String, dynamic> _generateFallbackMenu(
     int weeklyBudget,
     List<PantryItem> pantry, {
