@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
+import '../../../core/services/shelf_life_estimator.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/persistent_financial_header.dart';
@@ -60,6 +61,112 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
     return '${quantity.toStringAsFixed(1)} $unit';
   }
 
+  void _editExpiredDateDialog(PantryItem item) {
+    DateTime? selectedDate = item.expiredDate ?? ShelfLifeEstimator.estimateExpirationDate(item.ingredientId, item.storageLocation);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final aiDate = ShelfLifeEstimator.estimateExpirationDate(item.ingredientId, item.storageLocation);
+          final aiDays = ShelfLifeEstimator.estimateShelfLifeDays(item.ingredientId, item.storageLocation);
+
+          return AlertDialog(
+            title: Text('Hạn Sử Dụng: ${item.ingredientId}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Chọn hoặc điều chỉnh ngày hết hạn:', style: TextStyle(fontSize: 13)),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: selectedDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                      lastDate: DateTime.now().add(const Duration(days: 730)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => selectedDate = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          selectedDate != null
+                              ? '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}'
+                              : 'Chưa chọn',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        const Icon(Icons.calendar_month, color: AppColors.primary),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () {
+                    setDialogState(() => selectedDate = aiDate);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.auto_awesome, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Dùng AI gợi ý: ${aiDate.day}/${aiDate.month}/${aiDate.year} ($aiDays ngày)',
+                          style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Hủy'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final firestore = ref.read(firestoreServiceProvider);
+                  final updatedItem = item.copyWith(expiredDate: selectedDate);
+                  await firestore.updatePantryItem(item.familyId, updatedItem);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã cập nhật HSD cho "${item.ingredientId}"!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Lưu'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   void _addPantryItemDialog() {
     final nameCtrl = TextEditingController();
     final quantityCtrl = TextEditingController(text: '1');
@@ -68,165 +175,281 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
 
     String selectedUnit = 'kg';
     String selectedLocation = (_selectedFilter != 'ALL') ? _selectedFilter : 'FRIDGE';
+    DateTime? chosenExpiredDate;
 
     final List<String> units = ['kg', 'g', 'quả', 'bắp', 'củ', 'hộp', 'bịch', 'gói', 'chai', 'l', 'ml', 'lon'];
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Thêm Nguyên Liệu Vào Tủ Lạnh'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppTextField(
-                  controller: nameCtrl,
-                  focusNode: nameFocus,
-                  labelText: 'Tên nguyên liệu / thực phẩm',
-                  hintText: 'VD: Cá hồi tươi, Bắp cải, Trứng gà...',
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: AppTextField(
-                        controller: quantityCtrl,
-                        focusNode: quantityFocus,
-                        labelText: 'Số lượng',
-                        keyboardType: TextInputType.text,
-                        enableMathEvaluation: true,
-                        hintText: '1.5 hoặc 500*2',
+        builder: (ctx, setDialogState) {
+          final foodName = nameCtrl.text.trim();
+          final aiEstimatedDate = ShelfLifeEstimator.estimateExpirationDate(foodName, selectedLocation);
+          final aiDays = ShelfLifeEstimator.estimateShelfLifeDays(foodName, selectedLocation);
+          final storageTip = ShelfLifeEstimator.getStorageTip(foodName, selectedLocation);
+
+          final effectiveDate = chosenExpiredDate ?? aiEstimatedDate;
+
+          return AlertDialog(
+            title: const Text('Thêm Nguyên Liệu Vào Tủ Lạnh'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTextField(
+                    controller: nameCtrl,
+                    focusNode: nameFocus,
+                    labelText: 'Tên nguyên liệu / thực phẩm',
+                    hintText: 'VD: Cá hồi tươi, Bắp cải, Trứng gà...',
+                    onChanged: (_) {
+                      setDialogState(() {});
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: AppTextField(
+                          controller: quantityCtrl,
+                          focusNode: quantityFocus,
+                          labelText: 'Số lượng',
+                          keyboardType: TextInputType.text,
+                          enableMathEvaluation: true,
+                          hintText: '1.5 hoặc 500*2',
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Đơn vị', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.borderLight),
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: selectedUnit,
-                                isExpanded: true,
-                                items: units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                                onChanged: (val) {
-                                  if (val != null) setDialogState(() => selectedUnit = val);
-                                },
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Đơn vị', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: AppColors.borderLight),
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedUnit,
+                                  isExpanded: true,
+                                  items: units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) setDialogState(() => selectedUnit = val);
+                                  },
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  const Text('Vị trí lưu trữ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLocationOption(
+                          label: '❄️ Tủ mát',
+                          locationKey: 'FRIDGE',
+                          currentLocation: selectedLocation,
+                          onSelect: (loc) => setDialogState(() => selectedLocation = loc),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _buildLocationOption(
+                          label: '🧊 Tủ đông',
+                          locationKey: 'FREEZER',
+                          currentLocation: selectedLocation,
+                          onSelect: (loc) => setDialogState(() => selectedLocation = loc),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _buildLocationOption(
+                          label: '🧺 Tủ khô',
+                          locationKey: 'PANTRY',
+                          currentLocation: selectedLocation,
+                          onSelect: (loc) => setDialogState(() => selectedLocation = loc),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Phần Hạn Sử Dụng & AI Gợi Ý
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Hạn sử dụng (Expired Date)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      if (chosenExpiredDate != null)
+                        InkWell(
+                          onTap: () => setDialogState(() => chosenExpiredDate = null),
+                          child: const Text('Dùng lại AI', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: effectiveDate,
+                        firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => chosenExpiredDate = picked);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: chosenExpiredDate != null ? AppColors.primary : AppColors.borderLight),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        color: chosenExpiredDate != null ? AppColors.primary.withOpacity(0.04) : Colors.transparent,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                chosenExpiredDate != null ? Icons.event_available : Icons.auto_awesome,
+                                size: 18,
+                                color: chosenExpiredDate != null ? AppColors.primary : Colors.orange,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${effectiveDate.day.toString().padLeft(2, '0')}/${effectiveDate.month.toString().padLeft(2, '0')}/${effectiveDate.year}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                chosenExpiredDate != null ? '(Tự chọn)' : '(✨ AI tự động tính)',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: chosenExpiredDate != null ? AppColors.primary : Colors.orange.shade800,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
                           ),
+                          const Icon(Icons.calendar_month, size: 20, color: Colors.grey),
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                const Text('Vị trí lưu trữ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildLocationOption(
-                        label: '❄️ Tủ mát',
-                        locationKey: 'FRIDGE',
-                        currentLocation: selectedLocation,
-                        onSelect: (loc) => setDialogState(() => selectedLocation = loc),
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.blue.withOpacity(0.18)),
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildLocationOption(
-                        label: '🧊 Tủ đông',
-                        locationKey: 'FREEZER',
-                        currentLocation: selectedLocation,
-                        onSelect: (loc) => setDialogState(() => selectedLocation = loc),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.tips_and_updates_outlined, size: 14, color: Colors.blue),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'AI gợi ý hạn dùng: $aiDays ngày (${effectiveDate.day}/${effectiveDate.month})',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (storageTip.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            storageTip,
+                            style: TextStyle(fontSize: 10.5, color: Colors.blue.shade900),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildLocationOption(
-                        label: '🧺 Tủ khô',
-                        locationKey: 'PANTRY',
-                        currentLocation: selectedLocation,
-                        onSelect: (loc) => setDialogState(() => selectedLocation = loc),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                nameFocus.dispose();
-                quantityFocus.dispose();
-                Navigator.pop(ctx);
-              },
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = nameCtrl.text.trim();
-                final quantityStr = quantityCtrl.text.replaceAll(RegExp(r'[^0-9.]'), '');
-                final quantity = double.tryParse(quantityStr) ?? 0;
-
-                if (name.isEmpty) {
-                  nameFocus.requestFocus();
-                  return;
-                }
-                if (quantity <= 0) {
-                  quantityFocus.requestFocus();
-                  return;
-                }
-
-                final user = ref.read(firebaseAuthServiceProvider).currentUser;
-                final firestore = ref.read(firestoreServiceProvider);
-                if (user == null) return;
-
-                final userDoc = await firestore.watchUser(user.uid).first;
-                final familyId = userDoc?.familyId;
-                if (familyId == null) return;
-
-                final newItem = PantryItem(
-                  id: const Uuid().v4(),
-                  familyId: familyId,
-                  ingredientId: name,
-                  quantity: quantity,
-                  unit: selectedUnit,
-                  storageLocation: selectedLocation,
-                );
-
-                await firestore.updatePantryItem(familyId, newItem);
-
-                nameFocus.dispose();
-                quantityFocus.dispose();
-                if (mounted) {
+            actions: [
+              TextButton(
+                onPressed: () {
+                  nameFocus.dispose();
+                  quantityFocus.dispose();
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Đã thêm "$name" vào tủ !'),
-                      backgroundColor: AppColors.success,
-                    ),
+                },
+                child: const Text('Hủy'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final name = nameCtrl.text.trim();
+                  final quantityStr = quantityCtrl.text.replaceAll(RegExp(r'[^0-9.]'), '');
+                  final quantity = double.tryParse(quantityStr) ?? 0;
+
+                  if (name.isEmpty) {
+                    nameFocus.requestFocus();
+                    return;
+                  }
+                  if (quantity <= 0) {
+                    quantityFocus.requestFocus();
+                    return;
+                  }
+
+                  final user = ref.read(firebaseAuthServiceProvider).currentUser;
+                  final firestore = ref.read(firestoreServiceProvider);
+                  if (user == null) return;
+
+                  final userDoc = await firestore.watchUser(user.uid).first;
+                  final familyId = userDoc?.familyId;
+                  if (familyId == null) return;
+
+                  final finalExpiredDate = chosenExpiredDate ?? aiEstimatedDate;
+
+                  final newItem = PantryItem(
+                    id: const Uuid().v4(),
+                    familyId: familyId,
+                    ingredientId: name,
+                    quantity: quantity,
+                    unit: selectedUnit,
+                    storageLocation: selectedLocation,
+                    expiredDate: finalExpiredDate,
                   );
-                }
-              },
-              child: const Text('Thêm Mới'),
-            ),
-          ],
-        ),
+
+                  await firestore.updatePantryItem(familyId, newItem);
+
+                  nameFocus.dispose();
+                  quantityFocus.dispose();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã thêm "$name" vào tủ (HSD: ${finalExpiredDate.day}/${finalExpiredDate.month}) !'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Thêm Mới'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -524,6 +747,80 @@ class _PantryScreenState extends ConsumerState<PantryScreen> {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Builder(
+                                    builder: (context) {
+                                      final expDate = item.expiredDate;
+                                      if (expDate != null) {
+                                        final status = ShelfLifeEstimator.getStatus(expDate);
+                                        final statusColor = ShelfLifeEstimator.getStatusColor(status);
+                                        final remainingText = ShelfLifeEstimator.formatRemainingDaysText(expDate);
+
+                                        return InkWell(
+                                          onTap: () => _editExpiredDateDialog(item),
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withOpacity(0.12),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: statusColor.withOpacity(0.4), width: 0.8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  status == ShelfLifeStatus.expired
+                                                      ? Icons.error_outline_rounded
+                                                      : (status == ShelfLifeStatus.expiringSoon
+                                                          ? Icons.warning_amber_rounded
+                                                          : Icons.timer_outlined),
+                                                  size: 11,
+                                                  color: statusColor,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'HSD: ${expDate.day.toString().padLeft(2, '0')}/${expDate.month.toString().padLeft(2, '0')} • $remainingText',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: statusColor,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Icon(Icons.edit, size: 9, color: statusColor.withOpacity(0.8)),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        final aiDays = ShelfLifeEstimator.estimateShelfLifeDays(item.ingredientId, item.storageLocation);
+                                        return InkWell(
+                                          onTap: () => _editExpiredDateDialog(item),
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.withOpacity(0.08),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.blue.withOpacity(0.3), width: 0.8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.auto_awesome, size: 10, color: Colors.blue),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Thêm HSD (AI: ~$aiDays ngày)',
+                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ],
                               ),

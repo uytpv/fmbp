@@ -70,6 +70,15 @@ class ParseRecipeResponse(BaseModel):
     cook_time: int  # Phút
     ingredients: List[IngredientItem]
 
+class PredictShelfLifeRequest(BaseModel):
+    item_name: str = Field(..., description="Tên nguyên liệu hoặc thực phẩm")
+    storage_location: str = Field(default="FRIDGE", description="FRIDGE, FREEZER, hoặc PANTRY")
+
+class PredictShelfLifeResponse(BaseModel):
+    shelf_life_days: int = Field(..., description="Số ngày bảo quản an toàn tối đa")
+    storage_tip: str = Field(default="", description="Mẹo bảo quản thực phẩm hữu ích")
+    confidence: str = Field(default="high", description="Mức độ tin cậy của AI")
+
 # ----------------- UTILITY FUNCTIONS -----------------
 
 async def call_gemini_flash(prompt: str, system_prompt: Optional[str] = None) -> Optional[str]:
@@ -268,6 +277,42 @@ async def parse_recipe(request: ParseRecipeRequest):
     except Exception as e:
         logger.error(f"Lỗi phân tích JSON từ AI: {str(e)}\nPhản hồi thô: {response_text}")
         raise HTTPException(status_code=500, detail="Lỗi bóc tách công thức nấu ăn")
+
+@app.post("/api/v1/ai/predict-shelf-life", response_model=PredictShelfLifeResponse)
+async def predict_shelf_life(request: PredictShelfLifeRequest):
+    """
+    Phỏng đoán hạn sử dụng (số ngày bảo quản) của thực phẩm dựa trên tên và vị trí lưu trữ.
+    """
+    system_prompt = (
+        "Bạn là chuyên gia an toàn thực phẩm. Nhiệm vụ của bạn là ước tính số ngày bảo quản tối đa an toàn "
+        "cho thực phẩm dựa trên tên nguyên liệu và vị trí bảo quản (FRIDGE = ngăn mát, FREEZER = ngăn đông, PANTRY = tủ khô/nhiệt độ phòng). "
+        "Hãy đưa ra số ngày cụ thể (nguyên dương) và 1 mẹo bảo quản ngắn gọn (storage_tip) bằng tiếng Việt. "
+        "Bạn PHẢI trả về JSON object duy nhất theo định dạng:\n\n"
+        "{\n"
+        '  "shelf_life_days": 5,\n'
+        '  "storage_tip": "Nên bọc kín màng bọc thực phẩm trước khi cất vào ngăn mát",\n'
+        '  "confidence": "high"\n'
+        "}"
+    )
+
+    prompt = f"Thực phẩm: {request.item_name}\nVị trí bảo quản: {request.storage_location}"
+    response_text = await call_ai_engine(prompt, system_prompt)
+
+    try:
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}') + 1
+        json_data = json.loads(response_text[start_idx:end_idx])
+        return json_data
+    except Exception as e:
+        logger.warning(f"Fallback sang rule-based do lỗi JSON AI: {str(e)}")
+        # Rule-based fallback an toàn
+        loc = request.storage_location.upper()
+        default_days = 90 if loc == "FREEZER" else (7 if loc == "PANTRY" else 4)
+        return {
+            "shelf_life_days": default_days,
+            "storage_tip": "Bảo quản ở nhiệt độ thích hợp và đậy kín.",
+            "confidence": "medium"
+        }
 
 if __name__ == "__main__":
     import uvicorn

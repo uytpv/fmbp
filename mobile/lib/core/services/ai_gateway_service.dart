@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:fmbp_models/fmbp_models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../config/app_config.dart';
+import 'shelf_life_estimator.dart';
 
 part 'ai_gateway_service.g.dart';
 
@@ -324,9 +325,90 @@ Trả về JSON duy nhất:
       return null;
     }
   }
+
+  /// Phỏng đoán hạn sử dụng (số ngày) và mẹo bảo quản dựa trên AI kết hợp Heuristic
+  Future<Map<String, dynamic>> predictShelfLife({
+    required String itemName,
+    required String storageLocation,
+  }) async {
+    // 1. Thử gọi backend AI Server nếu khả dụng
+    if (_dio.options.baseUrl.isNotEmpty) {
+      try {
+        final response = await _dio.post(
+          '/api/v1/ai/predict-shelf-life',
+          data: {
+            'item_name': itemName,
+            'storage_location': storageLocation,
+          },
+        );
+        if (response.statusCode == 200 && response.data != null) {
+          final data = response.data as Map<String, dynamic>;
+          final days = (data['shelf_life_days'] as num?)?.toInt();
+          if (days != null && days > 0) {
+            return {
+              'shelf_life_days': days,
+              'storage_tip': data['storage_tip'] ?? '',
+              'confidence': data['confidence'] ?? 'high',
+              'source': 'ai_server',
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. Thử gọi Gemini REST API trực tiếp nếu có API key
+    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    if (apiKey.isNotEmpty) {
+      try {
+        final dio = Dio();
+        final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
+        final prompt = '''
+Bạn là Chuyên gia An toàn Thực phẩm. Thực phẩm: "$itemName", vị trí bảo quản: "$storageLocation".
+Hãy phỏng đoán số ngày bảo quản tối đa an toàn (shelf_life_days: int) và mẹo bảo quản ngắn gọn (storage_tip: String).
+Trả về JSON duy nhất:
+{
+  "shelf_life_days": 5,
+  "storage_tip": "Mẹo bảo quản ngắn gọn"
+}
+''';
+        final res = await dio.post(
+          url,
+          data: {
+            'contents': [
+              {
+                'parts': [{'text': prompt}]
+              }
+            ],
+            'generationConfig': {'responseMimeType': 'application/json'},
+          },
+        );
+        final text = res.data['candidates'][0]['content']['parts'][0]['text'] as String;
+        final json = jsonDecode(text) as Map<String, dynamic>;
+        final days = (json['shelf_life_days'] as num?)?.toInt();
+        if (days != null && days > 0) {
+          return {
+            'shelf_life_days': days,
+            'storage_tip': json['storage_tip'] ?? '',
+            'confidence': 'high',
+            'source': 'gemini_direct',
+          };
+        }
+      } catch (_) {}
+    }
+
+    // 3. Fallback tức thì sang Local Heuristics Engine (0ms, offline)
+    final days = ShelfLifeEstimator.estimateShelfLifeDays(itemName, storageLocation);
+    final tip = ShelfLifeEstimator.getStorageTip(itemName, storageLocation);
+    return {
+      'shelf_life_days': days,
+      'storage_tip': tip,
+      'confidence': 'medium',
+      'source': 'local_engine',
+    };
+  }
 }
 
 @riverpod
-AIGatewayService aiGatewayService(ref) {
+AIGatewayService aiGatewayService(Ref ref) {
   return AIGatewayService();
 }

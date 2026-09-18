@@ -12,6 +12,7 @@ abstract class PantryItem with _$PantryItem {
     required double quantity,
     required String unit,
     required String storageLocation, // FRIDGE, FREEZER, PANTRY, CABINET
+    DateTime? expiredDate,
   }) = _PantryItem;
 
   factory PantryItem.fromJson(Map<String, dynamic> json) => _$PantryItemFromJson(json);

@@ -13,6 +13,7 @@ abstract class ShoppingListItem with _$ShoppingListItem {
     required String unit,
     required bool isChecked,
     required int estimatedPrice, // integer VNĐ
+    DateTime? expiredDate,
   }) = _ShoppingListItem;
 
   factory ShoppingListItem.fromJson(Map<String, dynamic> json) => _$ShoppingListItemFromJson(json);

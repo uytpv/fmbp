@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../app/theme.dart';
 import '../../../core/services/firebase_auth_service.dart';
 import '../../../core/services/firestore_service.dart';
+import '../../../core/services/shelf_life_estimator.dart';
 import '../../../core/utils/recipe_ingredient_parser.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -63,6 +64,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final String initialUnit = existingCustom?['unit'] as String? ?? (item['unit'] as String);
     final String initialLoc = existingCustom?['storageLocation'] as String? ?? (item['storageLocation'] as String);
     final double initialPrice = (existingCustom?['price'] as num?)?.toDouble() ?? 5.0;
+    DateTime? customExpiredDate = existingCustom?['expiredDate'] as DateTime?;
 
     final qtyCtrl = TextEditingController(
       text: initialQty.truncateToDouble() == initialQty ? initialQty.toInt().toString() : initialQty.toString(),
@@ -191,6 +193,83 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.md),
+
+                // Expired Date Row with AI prediction
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Hạn sử dụng (Expired Date):',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                    if (customExpiredDate != null)
+                      InkWell(
+                        onTap: () => setBottomSheetState(() => customExpiredDate = null),
+                        child: const Text('Dùng lại AI', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Builder(
+                  builder: (context) {
+                    final aiDate = ShelfLifeEstimator.estimateExpirationDate(item['name'], selectedLoc);
+                    final aiDays = ShelfLifeEstimator.estimateShelfLifeDays(item['name'], selectedLoc);
+                    final effectiveDate = customExpiredDate ?? aiDate;
+
+                    return InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: ctx,
+                          initialDate: effectiveDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(const Duration(days: 730)),
+                        );
+                        if (picked != null) {
+                          setBottomSheetState(() => customExpiredDate = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: customExpiredDate != null ? AppColors.primary : Colors.black12),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                          color: customExpiredDate != null ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  customExpiredDate != null ? Icons.event_available : Icons.auto_awesome,
+                                  size: 16,
+                                  color: customExpiredDate != null ? AppColors.primary : Colors.orange,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${effectiveDate.day.toString().padLeft(2, '0')}/${effectiveDate.month.toString().padLeft(2, '0')}/${effectiveDate.year}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  customExpiredDate != null ? '(Tự chọn)' : '(✨ AI: ~$aiDays ngày)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: customExpiredDate != null ? AppColors.primary : Colors.orange.shade800,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Icon(Icons.calendar_month, size: 18, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: AppSpacing.lg),
 
                 Row(
@@ -207,6 +286,9 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                         onPressed: () {
                           final newQty = double.tryParse(qtyCtrl.text) ?? initialQty;
                           final newPrice = double.tryParse(priceCtrl.text) ?? initialPrice;
+                          final aiDate = ShelfLifeEstimator.estimateExpirationDate(item['name'], selectedLoc);
+                          final finalExpDate = customExpiredDate ?? aiDate;
+
                           setState(() {
                             _checkedStatus[itemId] = true;
                             _customItemEdits[itemId] = {
@@ -214,7 +296,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                               'unit': selectedUnit,
                               'storageLocation': selectedLoc,
                               'price': newPrice,
-                              'displayQty': '$newQty $selectedUnit ${newPrice > 0 ? "($newPrice)" : ""}',
+                              'expiredDate': finalExpDate,
+                              'displayQty': '$newQty $selectedUnit ${newPrice > 0 ? "($newPrice)" : ""} • HSD: ${finalExpDate.day}/${finalExpDate.month}',
                             };
                           });
                           Navigator.pop(ctx);
@@ -295,6 +378,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
             final finalUnit = custom?['unit'] as String? ?? item['unit'] as String;
             final finalLoc = custom?['storageLocation'] as String? ?? item['storageLocation'] as String;
             final finalPrice = (custom?['price'] as num?)?.toDouble() ?? 5.0;
+            final finalExpiredDate = (custom?['expiredDate'] as DateTime?) ?? ShelfLifeEstimator.estimateExpirationDate(item['name'], finalLoc);
 
             totalSpent += finalPrice;
 
@@ -305,6 +389,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
               quantity: finalQty,
               unit: finalUnit,
               storageLocation: finalLoc,
+              expiredDate: finalExpiredDate,
             );
             await firestore.updatePantryItem(familyId, pantryItem);
           }
